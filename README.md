@@ -14,6 +14,4 @@ mvn clean compile
 
 ## Desarrollo
 
-Consultar [AGENTS.md](AGENTS.md) antes de modificar el proyecto.
-Las funcionalidades se desarrollan en ramas `feature/...`, se integran en `develop`
-y las versiones estables pasan a `main`.
+
