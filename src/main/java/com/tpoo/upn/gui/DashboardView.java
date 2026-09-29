@@ -146,7 +146,10 @@ public class DashboardView {
         colPlan.setPrefWidth(150);
         colEstado.setPrefWidth(120);
 
-        tabla.getColumns().addAll(colDni, colNombre, colPlan, colEstado);
+        tabla.getColumns().add(colDni);
+        tabla.getColumns().add(colNombre);
+        tabla.getColumns().add(colPlan);
+        tabla.getColumns().add(colEstado);
         tabla.setPlaceholder(new Label("No hay clientes pendientes de validación."));
 
         box.getChildren().addAll(lbl, tabla);
