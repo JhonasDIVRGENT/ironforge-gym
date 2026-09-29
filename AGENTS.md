@@ -46,7 +46,6 @@ src/main/java/com/tpoo/upn/
 - model
 - dao
 - controller
-- config
 - session
 
 No crear paquetes adicionales sin una justificación clara.
