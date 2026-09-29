@@ -22,6 +22,10 @@ public abstract class Persona {
         if (nombres == null || nombres.isBlank()) {
             throw new IllegalArgumentException("Los nombres son obligatorios");
         }
+        // La columna nombres del SQL admite como maximo 100 caracteres.
+        if (nombres.length() > 100) {
+            throw new IllegalArgumentException("Los nombres no pueden pasar de 100 caracteres");
+        }
         this.nombres = nombres;
     }
 
@@ -32,6 +36,10 @@ public abstract class Persona {
     public void setApellidos(String apellidos) {
         if (apellidos == null || apellidos.isBlank()) {
             throw new IllegalArgumentException("Los apellidos son obligatorios");
+        }
+        // La columna apellidos del SQL admite como maximo 100 caracteres.
+        if (apellidos.length() > 100) {
+            throw new IllegalArgumentException("Los apellidos no pueden pasar de 100 caracteres");
         }
         this.apellidos = apellidos;
     }

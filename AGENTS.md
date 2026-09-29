@@ -46,7 +46,6 @@ src/main/java/com/tpoo/upn/
 - model
 - dao
 - controller
-- config
 - session
 
 No crear paquetes adicionales sin una justificación clara.
@@ -189,7 +188,10 @@ Los DAO utilizarán PreparedStatement.
 
 La conexión estará centralizada en:
 
-com.tpoo.upn.config.ConexionDB
+com.tpoo.upn.dao.ConexionDB
+
+(Ubicación definida por el UML del proyecto: ConexionDB pertenece al
+paquete dao, junto a los DAO que la utilizan.)
 
 Los DAO utilizarán ConexionDB para obtener conexiones JDBC.
 
