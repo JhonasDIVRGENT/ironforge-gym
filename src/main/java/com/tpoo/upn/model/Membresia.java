@@ -18,7 +18,11 @@ public class Membresia {
     private LocalDate fechaInicio;
     private LocalDate fechaFin;
 
-    /** Constructor usado antes de insertar la membresia en la base de datos. */
+    /**
+     * Constructor usado antes de insertar la membresia en la base de datos.
+     * Solo crea el objeto en memoria: no guarda nada en MySQL.
+     * El idMembresia queda en 0 porque MySQL todavia no le asigno un id.
+     */
     public Membresia(Cliente cliente, TipoMembresia tipo, LocalDate fechaInicio, LocalDate fechaFin) {
         if (fechaInicio == null || fechaFin == null) {
             throw new IllegalArgumentException("Las fechas de la membresia son obligatorias");
@@ -28,11 +32,15 @@ public class Membresia {
         }
         setCliente(cliente);
         setTipo(tipo);
+        // Se asignan directamente porque cada setter necesita que la otra fecha ya exista.
         this.fechaInicio = fechaInicio;
         this.fechaFin = fechaFin;
     }
 
-    /** Constructor usado al recuperar la membresia desde la base de datos. */
+    /**
+     * Constructor usado al recuperar la membresia desde la base de datos.
+     * Tampoco consulta MySQL: solo recibe los datos que el DAO ya leyo.
+     */
     public Membresia(int idMembresia, Cliente cliente, TipoMembresia tipo,
             LocalDate fechaInicio, LocalDate fechaFin) {
         this(cliente, tipo, fechaInicio, fechaFin);
@@ -44,6 +52,10 @@ public class Membresia {
     }
 
     public void setIdMembresia(int idMembresia) {
+        // 0 significa "aun sin id en la base de datos"; un id negativo no existe.
+        if (idMembresia < 0) {
+            throw new IllegalArgumentException("El id de la membresia no puede ser negativo");
+        }
         this.idMembresia = idMembresia;
     }
 
@@ -77,7 +89,7 @@ public class Membresia {
         if (fechaInicio == null) {
             throw new IllegalArgumentException("La fecha de inicio es obligatoria");
         }
-        if (fechaFin.isBefore(fechaInicio)) {
+        if (this.fechaFin != null && this.fechaFin.isBefore(fechaInicio)) {
             throw new IllegalArgumentException("La fecha de fin no puede ser menor a la fecha de inicio");
         }
         this.fechaInicio = fechaInicio;
@@ -91,7 +103,7 @@ public class Membresia {
         if (fechaFin == null) {
             throw new IllegalArgumentException("La fecha de fin es obligatoria");
         }
-        if (fechaFin.isBefore(fechaInicio)) {
+        if (this.fechaInicio != null && fechaFin.isBefore(this.fechaInicio)) {
             throw new IllegalArgumentException("La fecha de fin no puede ser menor a la fecha de inicio");
         }
         this.fechaFin = fechaFin;
@@ -99,11 +111,17 @@ public class Membresia {
 
     /** La membresia esta vigente si la fecha esta dentro del periodo, incluyendo los extremos. */
     public boolean estaVigente(LocalDate fecha) {
+        if (fecha == null) {
+            throw new IllegalArgumentException("La fecha de consulta es obligatoria");
+        }
         return !fecha.isBefore(fechaInicio) && !fecha.isAfter(fechaFin);
     }
 
     /** Devuelve AUN_NO_VIGENTE, VIGENTE o VENCIDA segun la fecha consultada. */
     public String obtenerEstado(LocalDate fecha) {
+        if (fecha == null) {
+            throw new IllegalArgumentException("La fecha de consulta es obligatoria");
+        }
         if (fecha.isBefore(fechaInicio)) {
             return AUN_NO_VIGENTE;
         }

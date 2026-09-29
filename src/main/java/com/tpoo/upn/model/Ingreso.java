@@ -15,7 +15,12 @@ public class Ingreso {
     private Usuario usuario;
     private LocalDateTime fechaHora;
 
-    /** Constructor usado antes de insertar el ingreso en la base de datos. */
+    /**
+     * Constructor usado antes de insertar el ingreso en la base de datos.
+     * Solo crea el objeto en memoria: no guarda nada en MySQL.
+     * El idIngreso queda en 0 porque MySQL todavia no le asigno un id.
+     * Recibe la fechaHora, lo que permite reconstruir tambien ingresos historicos.
+     */
     public Ingreso(Cliente cliente, Membresia membresia, Usuario usuario, LocalDateTime fechaHora) {
         setCliente(cliente);
         setMembresia(membresia);
@@ -23,7 +28,10 @@ public class Ingreso {
         setFechaHora(fechaHora);
     }
 
-    /** Constructor usado al recuperar el ingreso desde la base de datos. */
+    /**
+     * Constructor usado al recuperar el ingreso desde la base de datos.
+     * Tampoco consulta MySQL: solo recibe los datos que el DAO ya leyo.
+     */
     public Ingreso(int idIngreso, Cliente cliente, Membresia membresia, Usuario usuario,
             LocalDateTime fechaHora) {
         this(cliente, membresia, usuario, fechaHora);
@@ -35,6 +43,10 @@ public class Ingreso {
     }
 
     public void setIdIngreso(int idIngreso) {
+        // 0 significa "aun sin id en la base de datos"; un id negativo no existe.
+        if (idIngreso < 0) {
+            throw new IllegalArgumentException("El id del ingreso no puede ser negativo");
+        }
         this.idIngreso = idIngreso;
     }
 
