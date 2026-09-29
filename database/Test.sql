@@ -101,6 +101,7 @@ FROM membresias m
 INNER JOIN clientes c ON m.id_cliente = c.id_cliente
 INNER JOIN tipos_membresia tm ON m.id_tipo = tm.id_tipo
 WHERE m.fecha_fin BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+  AND m.fecha_inicio <= CURDATE()
 ORDER BY m.fecha_fin ASC;
 
 -- =========================================
