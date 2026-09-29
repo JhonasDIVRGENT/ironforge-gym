@@ -10,7 +10,6 @@ import com.tpoo.upn.model.Membresia;
 import com.tpoo.upn.model.TipoMembresia;
 import com.tpoo.upn.model.Usuario;
 import com.tpoo.upn.session.Sesion;
-import java.io.Console;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -23,13 +22,16 @@ import java.util.Scanner;
  */
 public class Main {
 
+    // Toda la entrada pasa por un unico Scanner
     private static final Scanner ENTRADA = new Scanner(System.in);
+
     private static final List<String> PASOS = new ArrayList<>();
 
     public static void main(String[] args) {
         System.out.println("=== IronForge Gym - demostracion de requerimientos ===");
         System.out.println("ATENCION: esta demostracion CREA datos reales en la base");
         System.out.println("(un cliente, una membresia y un ingreso) y los deja guardados.");
+        System.out.println("Nota: la contrasena sera visible mientras la escribe.");
         System.out.println();
 
         Sesion sesion = new Sesion();
@@ -274,11 +276,6 @@ public class Main {
     }
 
     private static String leerClave(String etiqueta) {
-        Console consola = System.console();
-        if (consola != null) {
-            return new String(consola.readPassword(etiqueta));
-        }
-        System.out.println("(Sin consola disponible: lo que escriba sera visible en pantalla)");
         System.out.print(etiqueta);
         return ENTRADA.nextLine();
     }
