@@ -1,0 +1,490 @@
+/*
+ * Estilos compartidos de IronForge Gym (JavaFX CSS).
+ * Basados en docs de diseno "IronForge Precision Interface": fondo claro,
+ * texto negro, botones principales negros, bordes finos y rojo solo para
+ * errores o acciones de desactivacion.
+ */
+
+.root {
+    -if-negro: #111111;
+    -if-negro-hover: #262626;
+    -if-gris: #686868;
+    -if-rojo: #c73535;
+    -if-rojo-fondo: #fbeceb;
+    -if-fondo: #f7f7f5;
+    -if-superficie: #ffffff;
+    -if-superficie-baja: #f4f4f2;
+    -if-linea: #dededa;
+    -if-seleccion: #ecece9;
+
+    -fx-font-family: "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
+    -fx-font-size: 13px;
+    -fx-background-color: -if-fondo;
+    -fx-accent: -if-negro;
+    -fx-focus-color: -if-negro;
+    -fx-faint-focus-color: transparent;
+}
+
+/* ---------- Tipografia ---------- */
+
+.mono {
+    -fx-font-family: "Consolas", "Cascadia Mono", "Courier New", monospace;
+}
+
+.etiqueta {
+    -fx-font-family: "Consolas", "Cascadia Mono", "Courier New", monospace;
+    -fx-font-size: 11px;
+    -fx-text-fill: -if-gris;
+}
+
+.titulo-modulo {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -if-negro;
+}
+
+.titulo-panel {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -if-negro;
+}
+
+.descripcion {
+    -fx-text-fill: -if-gris;
+    -fx-font-size: 13px;
+}
+
+.dato-grande {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+.chip {
+    -fx-font-family: "Consolas", "Cascadia Mono", "Courier New", monospace;
+    -fx-font-size: 11px;
+    -fx-text-fill: -if-gris;
+    -fx-background-color: -if-superficie-baja;
+    -fx-border-color: -if-linea;
+    -fx-border-radius: 2;
+    -fx-background-radius: 2;
+    -fx-padding: 2 6 2 6;
+}
+
+/* ---------- Estructura ---------- */
+
+.contenido {
+    -fx-background-color: -if-fondo;
+    -fx-padding: 20;
+    -fx-spacing: 20;
+}
+
+.scroll-contenido,
+.scroll-contenido > .viewport {
+    -fx-background-color: -if-fondo;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.panel {
+    -fx-background-color: -if-superficie;
+    -fx-border-color: -if-linea;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 20;
+    -fx-spacing: 14;
+}
+
+.panel-cabecera {
+    -fx-border-color: transparent transparent -if-linea transparent;
+    -fx-padding: 0 0 10 0;
+    -fx-spacing: 8;
+    -fx-alignment: center-left;
+}
+
+.fondo-puntos {
+    -fx-background-color: -if-superficie;
+    -fx-background-image: url("../images/puntos.png");
+    -fx-background-repeat: repeat;
+}
+
+/* ---------- Barra lateral ---------- */
+
+.barra-lateral {
+    -fx-background-color: -if-superficie;
+    -fx-border-color: transparent -if-linea transparent transparent;
+    -fx-pref-width: 210;
+    -fx-min-width: 210;
+}
+
+.marca {
+    -fx-padding: 18 20 18 20;
+    -fx-spacing: 10;
+    -fx-alignment: center-left;
+    -fx-border-color: transparent transparent -if-linea transparent;
+}
+
+.marca-nombre {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -if-negro;
+}
+
+.marca-subtitulo {
+    -fx-font-family: "Consolas", "Cascadia Mono", "Courier New", monospace;
+    -fx-font-size: 10px;
+    -fx-text-fill: -if-gris;
+}
+
+.nav {
+    -fx-padding: 14 10 14 10;
+    -fx-spacing: 4;
+}
+
+.nav-seccion {
+    -fx-font-family: "Consolas", "Cascadia Mono", "Courier New", monospace;
+    -fx-font-size: 10px;
+    -fx-text-fill: -if-gris;
+    -fx-padding: 10 10 4 10;
+}
+
+.nav-boton {
+    -fx-background-color: transparent;
+    -fx-text-fill: #444748;
+    -fx-alignment: center-left;
+    -fx-padding: 9 12 9 12;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+}
+
+.nav-boton:hover {
+    -fx-background-color: #eeeeec;
+    -fx-text-fill: -if-negro;
+}
+
+.nav-boton-activo,
+.nav-boton-activo:hover {
+    -fx-background-color: -if-negro;
+    -fx-text-fill: white;
+}
+
+.usuario-tarjeta {
+    -fx-background-color: -if-superficie;
+    -fx-border-color: -if-linea;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 10;
+    -fx-spacing: 4;
+}
+
+.usuario-nombre {
+    -fx-font-weight: bold;
+}
+
+.pie-lateral {
+    -fx-padding: 10;
+    -fx-spacing: 8;
+    -fx-border-color: -if-linea transparent transparent transparent;
+    -fx-background-color: -if-superficie-baja;
+}
+
+/* ---------- Botones ---------- */
+
+.button {
+    -fx-cursor: hand;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-padding: 8 16 8 16;
+}
+
+.boton-primario {
+    -fx-background-color: -if-negro;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.boton-primario:hover {
+    -fx-background-color: -if-negro-hover;
+}
+
+.boton-grande {
+    -fx-font-size: 15px;
+    -fx-padding: 14 20 14 20;
+}
+
+.boton-secundario {
+    -fx-background-color: -if-superficie;
+    -fx-border-color: -if-linea;
+    -fx-text-fill: -if-negro;
+}
+
+.boton-secundario:hover {
+    -fx-background-color: -if-fondo;
+    -fx-border-color: -if-negro;
+}
+
+.boton-peligro {
+    -fx-background-color: -if-superficie;
+    -fx-border-color: -if-rojo;
+    -fx-text-fill: -if-rojo;
+}
+
+.boton-peligro:hover {
+    -fx-background-color: -if-rojo-fondo;
+}
+
+.boton-peligro:pressed {
+    -fx-background-color: -if-rojo;
+    -fx-text-fill: white;
+}
+
+.boton-salir {
+    -fx-background-color: transparent;
+    -fx-text-fill: -if-rojo;
+    -fx-font-family: "Consolas", "Cascadia Mono", "Courier New", monospace;
+    -fx-font-size: 11px;
+    -fx-padding: 4 6 4 6;
+}
+
+.boton-salir:hover {
+    -fx-underline: true;
+}
+
+.button:disabled {
+    -fx-opacity: 0.45;
+}
+
+/* ---------- Campos ---------- */
+
+.text-field,
+.password-field,
+.combo-box,
+.date-picker {
+    -fx-background-color: -if-superficie;
+    -fx-border-color: -if-linea;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-prompt-text-fill: -if-gris;
+}
+
+.text-field:focused,
+.password-field:focused,
+.combo-box:focused,
+.date-picker:focused {
+    -fx-border-color: -if-negro;
+}
+
+.text-field:disabled {
+    -fx-opacity: 1;
+    -fx-background-color: -if-superficie-baja;
+    -fx-text-fill: -if-gris;
+}
+
+.text-field,
+.password-field {
+    -fx-padding: 8 10 8 10;
+}
+
+.campo-mono {
+    -fx-font-family: "Consolas", "Cascadia Mono", "Courier New", monospace;
+    -fx-font-size: 14px;
+}
+
+.date-picker > .text-field {
+    -fx-border-color: transparent;
+}
+
+.combo-box .list-cell {
+    -fx-padding: 6 8 6 8;
+}
+
+/* ---------- Tablas ---------- */
+
+.table-view {
+    -fx-background-color: -if-superficie;
+    -fx-border-color: -if-linea;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-table-cell-border-color: -if-linea;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: -if-fondo;
+}
+
+.table-view .column-header {
+    -fx-background-color: -if-fondo;
+    -fx-border-color: transparent transparent -if-linea transparent;
+    -fx-pref-height: 34;
+}
+
+.table-view .column-header .label {
+    -fx-font-family: "Consolas", "Cascadia Mono", "Courier New", monospace;
+    -fx-font-size: 11px;
+    -fx-text-fill: -if-gris;
+    -fx-alignment: center-left;
+    -fx-padding: 0 8 0 8;
+}
+
+.table-view .filler {
+    -fx-background-color: -if-fondo;
+}
+
+.table-row-cell {
+    -fx-background-color: -if-superficie;
+    -fx-border-color: transparent transparent -if-linea transparent;
+    -fx-border-width: 0 0 1 3;
+    -fx-cell-size: 38;
+}
+
+.table-row-cell:hover {
+    -fx-background-color: #f0f0ee;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: -if-seleccion;
+    -fx-border-color: transparent transparent -if-linea -if-negro;
+    -fx-border-width: 0 0 1 3;
+}
+
+.table-row-cell .table-cell,
+.table-row-cell:selected .table-cell {
+    -fx-text-fill: -if-negro;
+    -fx-padding: 0 8 0 8;
+    -fx-alignment: center-left;
+}
+
+.table-view .placeholder .label {
+    -fx-text-fill: -if-gris;
+}
+
+/* ---------- Estados de membresia ---------- */
+
+.estado-vigente,
+.estado-vencida,
+.estado-pendiente {
+    -fx-font-family: "Consolas", "Cascadia Mono", "Courier New", monospace;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.table-row-cell .estado-vigente {
+    -fx-text-fill: -if-negro;
+}
+
+.table-row-cell .estado-vencida {
+    -fx-text-fill: -if-rojo;
+}
+
+.table-row-cell .estado-pendiente {
+    -fx-text-fill: -if-gris;
+}
+
+/* ---------- Mensajes ---------- */
+
+.mensaje {
+    -fx-wrap-text: true;
+    -fx-padding: 8 10 8 10;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+}
+
+.mensaje-exito {
+    -fx-background-color: -if-superficie-baja;
+    -fx-border-color: -if-negro;
+    -fx-text-fill: -if-negro;
+}
+
+.mensaje-error {
+    -fx-background-color: -if-rojo-fondo;
+    -fx-border-color: -if-rojo;
+    -fx-text-fill: #93000a;
+}
+
+.mensaje-info {
+    -fx-background-color: -if-superficie-baja;
+    -fx-border-color: -if-linea;
+    -fx-text-fill: #444748;
+}
+
+.resultado-ok {
+    -fx-background-color: -if-superficie-baja;
+    -fx-border-color: -if-negro;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 14;
+    -fx-spacing: 6;
+}
+
+/* ---------- Login ---------- */
+
+.login-fondo {
+    -fx-background-color: -if-fondo;
+}
+
+.login-panel {
+    -fx-background-color: -if-superficie;
+    -fx-border-color: -if-linea;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-max-width: 400;
+    -fx-pref-width: 400;
+}
+
+.login-identidad {
+    -fx-padding: 26 20 20 20;
+    -fx-spacing: 8;
+    -fx-alignment: center;
+    -fx-border-color: transparent transparent -if-linea transparent;
+}
+
+.login-formulario {
+    -fx-padding: 22;
+    -fx-spacing: 12;
+}
+
+.login-pie {
+    -fx-padding: 8 14 8 14;
+    -fx-background-color: -if-superficie-baja;
+    -fx-border-color: -if-linea transparent transparent transparent;
+}
+
+/* ---------- Pestanas y dialogos ---------- */
+
+.tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: -if-superficie-baja;
+    -fx-border-color: -if-linea;
+    -fx-background-radius: 4 4 0 0;
+    -fx-border-radius: 4 4 0 0;
+    -fx-padding: 6 14 6 14;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: -if-negro;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected .tab-label {
+    -fx-text-fill: white;
+}
+
+.tab-pane > .tab-header-area > .tab-header-background {
+    -fx-background-color: -if-fondo;
+}
+
+.tab-pane > .tab-content-area {
+    -fx-background-color: -if-fondo;
+    -fx-padding: 14 0 0 0;
+}
+
+.dialog-pane {
+    -fx-background-color: -if-superficie;
+}
+
+.dialog-pane > .button-bar > .container > .button {
+    -fx-background-color: -if-superficie;
+    -fx-border-color: -if-linea;
+}
+
+.dialog-pane > .button-bar > .container > .button:default {
+    -fx-background-color: -if-negro;
+    -fx-text-fill: white;
+}

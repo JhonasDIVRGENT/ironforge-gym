@@ -9,6 +9,7 @@ import com.tpoo.upn.model.TipoMembresia;
 import com.tpoo.upn.session.Sesion;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
@@ -16,6 +17,8 @@ import java.util.List;
  * proximas a vencer y gestion de tipos de membresia.
  */
 public class MembresiaService {
+
+    private static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final MembresiaDAO membresiaDAO = new MembresiaDAO();
     // ClienteDAO se usa para comprobar que el cliente existe realmente en la base.
@@ -30,22 +33,40 @@ public class MembresiaService {
         this.sesion = sesion;
     }
 
+    /**
+     * Registrar es para un cliente sin membresia vigente ni programada.
+     * Si ya tiene una, debe usarse renovar para que los periodos se encadenen.
+     */
     public Membresia registrarMembresia(Cliente cliente, TipoMembresia tipo,
             LocalDate inicio, LocalDate fin) throws SQLException {
         exigirRecepcionista();
+        if (cliente == null) {
+            throw new IllegalArgumentException("El cliente es obligatorio");
+        }
+        LocalDate ultimoFin = ultimoVencimiento(membresiaDAO.listarPorCliente(cliente.getDni()));
+        if (ultimoFin != null && !ultimoFin.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("El cliente ya tiene una membresia vigente o programada hasta el "
+                    + ultimoFin.format(FECHA) + "; use Renovar");
+        }
+        validarSinSuperposicion(ultimoFin, inicio);
         return guardarMembresia(cliente, tipo, inicio, fin);
     }
 
-    /** Renovar es insertar un periodo nuevo: las membresias anteriores se conservan. */
+    /**
+     * Renovar es insertar un periodo nuevo que empieza despues del ultimo vencimiento:
+     * los periodos se acumulan uno detras de otro y los anteriores se conservan.
+     */
     public Membresia renovarMembresia(Cliente cliente, TipoMembresia tipo,
             LocalDate inicio, LocalDate fin) throws SQLException {
         exigirRecepcionista();
         if (cliente == null) {
             throw new IllegalArgumentException("El cliente es obligatorio");
         }
-        if (membresiaDAO.listarPorCliente(cliente.getDni()).isEmpty()) {
+        List<Membresia> anteriores = membresiaDAO.listarPorCliente(cliente.getDni());
+        if (anteriores.isEmpty()) {
             throw new IllegalArgumentException("El cliente no tiene una membresia anterior que renovar");
         }
+        validarSinSuperposicion(ultimoVencimiento(anteriores), inicio);
         return guardarMembresia(cliente, tipo, inicio, fin);
     }
 
@@ -86,6 +107,29 @@ public class MembresiaService {
             throw new IllegalStateException("Debe iniciar sesion para realizar esta operacion");
         }
         return tipoDAO.listar();
+    }
+
+    /**
+     * Un cliente no puede tener dos periodos que cubran el mismo dia: el nuevo
+     * periodo debe empezar despues del ultimo vencimiento registrado.
+     * Si falta la fecha de inicio, la rechaza despues el constructor de Membresia.
+     */
+    private void validarSinSuperposicion(LocalDate ultimoFin, LocalDate inicio) {
+        if (ultimoFin != null && inicio != null && !inicio.isAfter(ultimoFin)) {
+            throw new IllegalArgumentException("La membresia debe empezar despues del "
+                    + ultimoFin.format(FECHA) + ", fecha del ultimo vencimiento del cliente");
+        }
+    }
+
+    /** Fecha de fin mas lejana entre los periodos del cliente, o null si no tiene ninguno. */
+    private LocalDate ultimoVencimiento(List<Membresia> membresias) {
+        LocalDate ultimo = null;
+        for (Membresia m : membresias) {
+            if (ultimo == null || m.getFechaFin().isAfter(ultimo)) {
+                ultimo = m.getFechaFin();
+            }
+        }
+        return ultimo;
     }
 
     /** Parte comun de registrar y renovar. */

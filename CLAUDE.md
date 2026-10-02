@@ -8,15 +8,17 @@ Antes de crear, modificar o eliminar código:
 
 1. Leer AGENTS.md completo.
 2. Respetar su arquitectura: paquetes `model`, `controller`, `service`, `dao`
-   (incluye ConexionDB), `session` y `app`; flujo presentación → controller →
-   service → DAO, con reglas y permisos en service.
-3. No crear paquetes, frameworks o clases adicionales sin autorización.
-4. Mantener compatibilidad con Java 21 y Maven.
+   (incluye ConexionDB), `session`, `app` y `gui`; flujo presentación (consola
+   o vista FXML + `gui`) → controller → service → DAO, con reglas y permisos en
+   service. Los controladores y servicios existentes se conservan.
+3. No crear paquetes, frameworks o clases adicionales sin autorización, ni
+   funcionalidades fuera del informe (AGENTS.md, secciones 2 y 12.1).
+4. Mantener compatibilidad con Java 21, JavaFX 21 y Maven; proyecto no modular.
 5. Ejecutar `mvn clean compile` después de cambios relevantes. No usar
    `mvn test` ni crear pruebas con JUnit, Mockito, TestNG u otros frameworks:
-   la verificación se hace con los casos de consola de `app` (AGENTS.md,
-   secciones 12 y 15). No agregar clases de consola nuevas sin que se pida:
-   la consola es conceptual y el resto irá en la AppGUI.
+   la verificación se hace con la GUI y los casos de consola de `app`
+   (AGENTS.md, secciones 12, 12.1 y 15). La consola debe seguir funcionando;
+   no agregar clases de consola nuevas sin que se pida.
 
 Si una instrucción de una tarea entra en conflicto con AGENTS.md o con el UML
 de `docs/diagramas/`, detenerse y señalar el conflicto antes de modificar la
@@ -40,4 +42,15 @@ arquitectura.
   escribir credenciales en el repositorio. Para comprobar sin escribir:
   cancelar con `0`, responder `n` antes de registrar o usar datos que el
   modelo rechace; `RecepcionConsultarMembresia` y `AdminConsultas` solo leen.
+- `mvn javafx:run` abre una ventana en el escritorio del usuario: si se lanza
+  para comprobar el arranque, cerrarla después. Para revisar pantallas sin
+  escribir datos, se puede usar un programa desechable en el directorio
+  temporal que abra `AppGUI`, navegue y guarde capturas con `Scene.snapshot`;
+  pulsar solo acciones de lectura o que el modelo/servicio rechace antes de
+  guardar. Ese programa no se agrega al repositorio.
+- Membresías: la regla de no superposición está en `MembresiaService` y aplica
+  a consola y JavaFX (AGENTS.md, sección 8). No crear caminos que la eviten
+  (DAO o SQL desde `app`/`gui`) ni comprobarla solo en la pantalla. Las
+  verificaciones que guardan membresías se hacen solo en una base de pruebas
+  confirmada; si no la hay, compilar y dejar pasos manuales.
 - No hacer commits ni push salvo petición explícita.
