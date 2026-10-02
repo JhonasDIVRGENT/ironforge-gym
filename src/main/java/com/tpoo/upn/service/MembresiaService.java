@@ -1,4 +1,4 @@
-package com.tpoo.upn.controller;
+package com.tpoo.upn.service;
 
 import com.tpoo.upn.dao.ClienteDAO;
 import com.tpoo.upn.dao.MembresiaDAO;
@@ -12,18 +12,18 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Reglas de negocio de membresias: registrar , renovar ,
- * consultar vigencia , proximas a vencer  y tipos .
+ * Reglas de negocio de membresias: registrar, renovar, consultar vigencia,
+ * proximas a vencer y gestion de tipos de membresia.
  */
-public class MembresiaController {
+public class MembresiaService {
 
     private final MembresiaDAO membresiaDAO = new MembresiaDAO();
-    private final TipoMembresiaDAO tipoDAO = new TipoMembresiaDAO();
-    // ClienteDAO se usa solo para comprobar que el cliente existe realmente en la base.
+    // ClienteDAO se usa para comprobar que el cliente existe realmente en la base.
     private final ClienteDAO clienteDAO = new ClienteDAO();
+    private final TipoMembresiaDAO tipoDAO = new TipoMembresiaDAO();
     private final Sesion sesion;
 
-    public MembresiaController(Sesion sesion) {
+    public MembresiaService(Sesion sesion) {
         if (sesion == null) {
             throw new IllegalArgumentException("La sesion es obligatoria");
         }
@@ -49,15 +49,20 @@ public class MembresiaController {
         return guardarMembresia(cliente, tipo, inicio, fin);
     }
 
+    /** Devuelve todas las membresias del cliente; el estado se calcula con Membresia.obtenerEstado. */
     public List<Membresia> consultarVigencia(String dni) throws SQLException {
         exigirRecepcionista();
         if (dni == null || dni.isBlank()) {
             throw new IllegalArgumentException("El DNI es obligatorio");
         }
+        // Se distingue "el cliente no existe" de "el cliente no tiene membresias".
+        if (clienteDAO.buscarPorDni(dni) == null) {
+            throw new IllegalArgumentException("El cliente no existe");
+        }
         return membresiaDAO.listarPorCliente(dni);
     }
 
-    /** RF-11: membresias vigentes que vencen entre hoy y los siguientes siete dias. */
+    /** RF-11: membresias vigentes hoy que vencen entre hoy y los siguientes siete dias. */
     public List<Membresia> listarPorVencer() throws SQLException {
         exigirAdministrador();
         LocalDate hoy = LocalDate.now();
@@ -75,6 +80,7 @@ public class MembresiaController {
         return tipoDAO.insertar(tipo);
     }
 
+    /** Ambos roles pueden consultar los tipos (RF-15). */
     public List<TipoMembresia> listarTipos() throws SQLException {
         if (!sesion.haySesionActiva()) {
             throw new IllegalStateException("Debe iniciar sesion para realizar esta operacion");
@@ -106,9 +112,12 @@ public class MembresiaController {
             throw new IllegalArgumentException("El tipo de membresia no existe");
         }
 
-        // El constructor de Membresia valida las fechas.
+        // El constructor de Membresia valida que las fechas existan y que fin no sea anterior a inicio.
         Membresia membresia = new Membresia(clienteGuardado, tipoGuardado, inicio, fin);
-        membresiaDAO.insertar(membresia);
+        // Se informa el fallo en lugar de devolver una membresia que no quedo guardada.
+        if (!membresiaDAO.insertar(membresia)) {
+            throw new SQLException("No se pudo guardar la membresia");
+        }
         return membresia;
     }
 

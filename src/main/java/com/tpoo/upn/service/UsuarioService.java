@@ -1,4 +1,4 @@
-package com.tpoo.upn.controller;
+package com.tpoo.upn.service;
 
 import com.tpoo.upn.dao.UsuarioDAO;
 import com.tpoo.upn.model.Usuario;
@@ -6,15 +6,15 @@ import com.tpoo.upn.session.Sesion;
 import java.sql.SQLException;
 
 /**
- * Reglas de negocio de usuarios: autenticacion , creacion 
- * y activacion o desactivacion de cuentas .
+ * Reglas de negocio de usuarios: inicio y cierre de sesion, creacion de cuentas
+ * y activacion o desactivacion de cuentas.
  */
-public class UsuarioController {
+public class UsuarioService {
 
     private final UsuarioDAO usuarioDAO = new UsuarioDAO();
     private final Sesion sesion;
 
-    public UsuarioController(Sesion sesion) {
+    public UsuarioService(Sesion sesion) {
         if (sesion == null) {
             throw new IllegalArgumentException("La sesion es obligatoria");
         }
@@ -47,6 +47,10 @@ public class UsuarioController {
         return usuario;
     }
 
+    public void cerrarSesion() {
+        sesion.cerrar();
+    }
+
     public boolean crearUsuario(Usuario usuario) throws SQLException {
         exigirAdministrador();
         if (usuario == null) {
@@ -55,30 +59,25 @@ public class UsuarioController {
         if (usuarioDAO.existeUsername(usuario.getUsername())) {
             throw new IllegalArgumentException("El username ya esta registrado");
         }
+        // Las cuentas nuevas se registran siempre como activas (RF-13).
         usuario.setActivo(true);
         return usuarioDAO.insertar(usuario);
     }
 
-    public boolean cambiarEstadoUsuario(Usuario usuario, boolean activo) throws SQLException {
+    /** Busca la cuenta por su username y guarda el nuevo estado. */
+    public boolean cambiarEstadoUsuario(String username, boolean activo) throws SQLException {
         exigirAdministrador();
-        if (usuario == null) {
-            throw new IllegalArgumentException("El usuario es obligatorio");
+        if (username == null || username.isBlank()) {
+            throw new IllegalArgumentException("El username es obligatorio");
         }
 
-        Usuario guardado = usuarioDAO.buscarPorUsername(usuario.getUsername());
-        if (guardado == null) {
+        Usuario usuario = usuarioDAO.buscarPorUsername(username);
+        if (usuario == null) {
             throw new IllegalArgumentException("El usuario no existe");
         }
-        if (guardado.getIdUsuario() != usuario.getIdUsuario()) {
-            throw new IllegalArgumentException("El usuario no corresponde al registro guardado");
-        }
 
-        guardado.setActivo(activo);
-        boolean actualizado = usuarioDAO.actualizar(guardado);
-        if (actualizado) {
-            usuario.setActivo(activo);
-        }
-        return actualizado;
+        usuario.setActivo(activo);
+        return usuarioDAO.actualizar(usuario);
     }
 
     private void exigirAdministrador() {

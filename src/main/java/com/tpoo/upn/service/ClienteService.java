@@ -1,27 +1,28 @@
-package com.tpoo.upn.controller;
+package com.tpoo.upn.service;
+
+import java.sql.SQLException;
 
 import com.tpoo.upn.dao.ClienteDAO;
 import com.tpoo.upn.model.Cliente;
 import com.tpoo.upn.session.Sesion;
-import java.sql.SQLException;
 
 /**
- * Reglas de negocio de clientes: registrar , buscar 
- * y actualizar . Todas corresponden al recepcionista.
+ * Reglas de negocio de clientes: registrar, buscar y actualizar.
+
  */
-public class ClienteController {
+public class ClienteService {
 
     private final ClienteDAO clienteDAO = new ClienteDAO();
     private final Sesion sesion;
 
-    public ClienteController(Sesion sesion) {
+    public ClienteService(Sesion sesion) {
         if (sesion == null) {
             throw new IllegalArgumentException("La sesion es obligatoria");
         }
         this.sesion = sesion;
     }
 
-    public boolean registrar(Cliente cliente) throws SQLException {
+    public boolean registrarCliente(Cliente cliente) throws SQLException {
         exigirRecepcionista();
         if (cliente == null) {
             throw new IllegalArgumentException("El cliente es obligatorio");
@@ -44,6 +45,7 @@ public class ClienteController {
     /**
      * Actualiza nombres, apellidos y telefono del cliente.
      * El DNI y el id identifican el registro, por eso no se cambian aqui.
+     * Las membresias e ingresos se conservan porque apuntan al mismo id_cliente.
      */
     public boolean actualizarCliente(Cliente cliente) throws SQLException {
         exigirRecepcionista();
