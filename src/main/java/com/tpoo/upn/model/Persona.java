@@ -10,6 +10,10 @@ public abstract class Persona {
     private String apellidos;
 
     public Persona(String nombres, String apellidos) {
+        // HU-01 CA-02: si faltan los dos datos se informa con un solo mensaje.
+        if ((nombres == null || nombres.isBlank()) && (apellidos == null || apellidos.isBlank())) {
+            throw new IllegalArgumentException("Los nombres y apellidos son obligatorios");
+        }
         setNombres(nombres);
         setApellidos(apellidos);
     }

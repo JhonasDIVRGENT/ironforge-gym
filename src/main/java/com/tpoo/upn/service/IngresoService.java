@@ -1,4 +1,4 @@
-package com.tpoo.upn.controller;
+package com.tpoo.upn.service;
 
 import com.tpoo.upn.dao.ClienteDAO;
 import com.tpoo.upn.dao.IngresoDAO;
@@ -14,22 +14,26 @@ import java.util.List;
 
 /**
  * Reglas de negocio de ingresos: registrar el acceso de un cliente
- *  y consultar su historial .
+ * y consultar su historial.
  */
-public class IngresoController {
+public class IngresoService {
 
     private final IngresoDAO ingresoDAO = new IngresoDAO();
     private final ClienteDAO clienteDAO = new ClienteDAO();
     private final MembresiaDAO membresiaDAO = new MembresiaDAO();
     private final Sesion sesion;
 
-    public IngresoController(Sesion sesion) {
+    public IngresoService(Sesion sesion) {
         if (sesion == null) {
             throw new IllegalArgumentException("La sesion es obligatoria");
         }
         this.sesion = sesion;
     }
 
+    /**
+     * Registra el ingreso solo si el cliente existe y tiene una membresia vigente.
+     * El usuario se toma de la Sesion y la fecha y hora del reloj del sistema.
+     */
     public Ingreso registrarIngreso(String dni) throws SQLException {
         exigirRecepcionista();
         if (dni == null || dni.isBlank()) {
@@ -51,7 +55,10 @@ public class IngresoController {
 
         Usuario empleado = sesion.getUsuarioActual();
         Ingreso ingreso = new Ingreso(cliente, autorizada, empleado, momento);
-        ingresoDAO.insertar(ingreso);
+        // Se informa el fallo en lugar de devolver un ingreso que no quedo guardado.
+        if (!ingresoDAO.insertar(ingreso)) {
+            throw new SQLException("No se pudo guardar el ingreso");
+        }
         return ingreso;
     }
 
@@ -70,15 +77,15 @@ public class IngresoController {
 
     /**
      * Devuelve la membresia vigente del cliente, o null si no tiene ninguna.
-     * Si hubiera varias vigentes se elige la de mayor idMembresia, que es la mas reciente;
-     * es solo un criterio tecnico para que la eleccion sea siempre la misma.
+     * Si hubiera varias vigentes se elige la de mayor idMembresia, que es la registrada
+     * mas recientemente; es un criterio tecnico para que la eleccion sea siempre la misma.
      */
     private Membresia buscarMembresiaVigente(Cliente cliente, LocalDateTime momento) throws SQLException {
         List<Membresia> membresias = membresiaDAO.listarPorCliente(cliente.getDni());
         Membresia elegida = null;
 
         for (Membresia membresia : membresias) {
-            // Se comparan los ids, no las referencias de los objetos.
+            // La membresia debe ser del mismo cliente; se comparan los ids, no las referencias.
             if (membresia.getCliente().getIdCliente() != cliente.getIdCliente()) {
                 continue;
             }

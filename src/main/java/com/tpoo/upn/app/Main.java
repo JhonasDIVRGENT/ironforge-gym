@@ -1,294 +1,89 @@
 package com.tpoo.upn.app;
 
-import com.tpoo.upn.controller.ClienteController;
-import com.tpoo.upn.controller.IngresoController;
-import com.tpoo.upn.controller.MembresiaController;
-import com.tpoo.upn.controller.UsuarioController;
 import com.tpoo.upn.model.Cliente;
 import com.tpoo.upn.model.Ingreso;
 import com.tpoo.upn.model.Membresia;
 import com.tpoo.upn.model.TipoMembresia;
 import com.tpoo.upn.model.Usuario;
+import com.tpoo.upn.service.ClienteService;
+import com.tpoo.upn.service.IngresoService;
+import com.tpoo.upn.service.MembresiaService;
+import com.tpoo.upn.service.UsuarioService;
 import com.tpoo.upn.session.Sesion;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 /**
- * Demostracion por consola de los requerimientos funcionales sobre MySQL.
- * Main solo pide datos, llama a los controladores y muestra resultados.
+ * Demostracion principal: una secuencia corta como recepcionista que cubre
+ * RF-10, RF-01, RF-02, RF-05, RF-04, RF-06, RF-07 y RF-08.
+ * Registra datos nuevos: un cliente, una membresia y un ingreso.
+ * Las demas operaciones se demuestran en las clases Prueba* de este paquete.
  */
 public class Main {
 
-    // Toda la entrada pasa por un unico Scanner
     private static final Scanner ENTRADA = new Scanner(System.in);
 
-    private static final List<String> PASOS = new ArrayList<>();
-
     public static void main(String[] args) {
-        System.out.println("=== IronForge Gym - demostracion de requerimientos ===");
-        System.out.println("ATENCION: esta demostracion CREA datos reales en la base");
-        System.out.println("(un cliente, una membresia y un ingreso) y los deja guardados.");
-        System.out.println("Nota: la contrasena sera visible mientras la escribe.");
-        System.out.println();
-
+        // Una sola Sesion compartida por los servicios de esta ejecucion.
         Sesion sesion = new Sesion();
-        UsuarioController usuarioCtrl = new UsuarioController(sesion);
-        ClienteController clienteCtrl = new ClienteController(sesion);
-        MembresiaController membresiaCtrl = new MembresiaController(sesion);
-        IngresoController ingresoCtrl = new IngresoController(sesion);
+        UsuarioService usuarioService = new UsuarioService(sesion);
+        ClienteService clienteService = new ClienteService(sesion);
+        MembresiaService membresiaService = new MembresiaService(sesion);
+        IngresoService ingresoService = new IngresoService(sesion);
+
+        System.out.println("=== IronForge Gym - demostracion principal ===");
+        System.out.println("Se registraran un cliente, una membresia y un ingreso nuevos.");
 
         try {
-            ejecutarDemostracion(sesion, usuarioCtrl, clienteCtrl, membresiaCtrl, ingresoCtrl);
+            Usuario usuario = usuarioService.iniciarSesion(leer("Username del recepcionista: "), leerClave());
+            System.out.println("1. Sesion iniciada: " + usuario.getNombreCompleto() + " (" + usuario.getRol() + ")");
+
+            String dni = leer("DNI nuevo del cliente (8 digitos, que no exista): ");
+            clienteService.registrarCliente(new Cliente(dni, "Cliente", "Demostracion", "999000111"));
+            System.out.println("2. Cliente registrado correctamente.");
+
+            Cliente cliente = clienteService.buscarCliente(dni);
+            System.out.println("3. Busqueda por DNI: " + cliente.getNombreCompleto() + " | DNI " + cliente.getDni());
+
+            List<TipoMembresia> tipos = membresiaService.listarTipos();
+            if (tipos.isEmpty()) {
+                System.out.println("No hay tipos de membresia registrados; no se puede continuar.");
+                return;
+            }
+            TipoMembresia tipo = tipos.get(0);
+            LocalDate hoy = LocalDate.now();
+            Membresia membresia = membresiaService.registrarMembresia(cliente, tipo, hoy, hoy.plusDays(29));
+            System.out.println("4. Membresia " + tipo.getNombre() + " registrada del "
+                    + membresia.getFechaInicio() + " al " + membresia.getFechaFin());
+
+            for (Membresia m : membresiaService.consultarVigencia(dni)) {
+                System.out.println("5. Vigencia de la membresia " + m.getIdMembresia() + ": " + m.obtenerEstado(hoy));
+            }
+
+            Ingreso ingreso = ingresoService.registrarIngreso(dni);
+            System.out.println("6. Ingreso registrado el " + ingreso.getFechaHora().withNano(0)
+                    + " por " + ingreso.getUsuario().getUsername()
+                    + " con la membresia " + ingreso.getMembresia().getIdMembresia());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            System.out.println("Demostracion detenida: " + e.getMessage());
         } catch (SQLException e) {
-            // No se imprime el mensaje completo para no exponer datos de conexion.
-            System.out.println();
-            System.out.println("ERROR de base de datos (" + e.getClass().getSimpleName() + ").");
-            System.out.println("Compruebe que MySQL este activo y que la base exista.");
+            System.out.println("Error de base de datos. Compruebe que MySQL este activo.");
         } finally {
-            sesion.cerrar();
-            System.out.println();
-            System.out.println("Sesion cerrada.");
-            mostrarResumen();
+            usuarioService.cerrarSesion();
+            System.out.println("7. Sesion cerrada.");
         }
     }
 
-    private static void ejecutarDemostracion(Sesion sesion, UsuarioController usuarioCtrl,
-            ClienteController clienteCtrl, MembresiaController membresiaCtrl,
-            IngresoController ingresoCtrl) throws SQLException {
-
-        // ---------- PASO 1 - RF-10: iniciar sesion como recepcionista ----------
-        System.out.println("--- PASO 1 (RF-10): iniciar sesion como RECEPCIONISTA ---");
-        Usuario recepcionista;
-        try {
-            recepcionista = usuarioCtrl.iniciarSesion(
-                    leerTexto("Username del recepcionista: "),
-                    leerClave("Contrasena: "));
-        } catch (IllegalArgumentException e) {
-            System.out.println("No se pudo iniciar sesion: " + e.getMessage());
-            return;
-        }
-        if (!sesion.esRecepcionista()) {
-            System.out.println("La cuenta '" + recepcionista.getUsername() + "' tiene rol "
-                    + recepcionista.getRol() + ".");
-            System.out.println("Esta demostracion necesita una cuenta de RECEPCIONISTA. Se termina aqui.");
-            return;
-        }
-        System.out.println("Sesion iniciada: " + recepcionista.getNombreCompleto()
-                + " (" + recepcionista.getRol() + ")");
-        PASOS.add("RF-10 login de recepcionista: OK");
-
-        // ---------- PASO 2 - RF-01: registrar un cliente ----------
-        System.out.println();
-        System.out.println("--- PASO 2 (RF-01): registrar un cliente de demostracion ---");
-        Cliente cliente = pedirClienteNuevo(clienteCtrl);
-        if (!clienteCtrl.registrar(cliente)) {
-            System.out.println("El cliente no se pudo registrar. Se termina la demostracion.");
-            return;
-        }
-        System.out.println("Cliente registrado con id " + cliente.getIdCliente());
-        PASOS.add("RF-01 registro de cliente: OK (id " + cliente.getIdCliente() + ")");
-
-        String dni = cliente.getDni();
-
-        // ---------- PASO 3 - RF-02: buscar al cliente por DNI ----------
-        System.out.println();
-        System.out.println("--- PASO 3 (RF-02): buscar al cliente por su DNI ---");
-        Cliente encontrado = clienteCtrl.buscarCliente(dni);
-        if (encontrado == null) {
-            System.out.println("No se encontro el cliente recien registrado. Se termina la demostracion.");
-            return;
-        }
-        System.out.println("DNI: " + encontrado.getDni());
-        System.out.println("Nombre: " + encontrado.getNombreCompleto());
-        System.out.println("Telefono: " + encontrado.getTelefono());
-        PASOS.add("RF-02 busqueda por DNI: OK");
-
-        // ---------- PASO 4 - RF-07: ingreso rechazado por no tener membresia ----------
-        System.out.println();
-        System.out.println("--- PASO 4 (RF-07): intentar un ingreso SIN membresia ---");
-        try {
-            ingresoCtrl.registrarIngreso(dni);
-            System.out.println("FALLO DE LA DEMOSTRACION: se permitio el ingreso sin membresia vigente.");
-            PASOS.add("RF-07 rechazo sin membresia: FALLO (se permitio)");
-        } catch (IllegalArgumentException e) {
-            System.out.println("Rechazado como se esperaba: " + e.getMessage());
-            PASOS.add("RF-07 rechazo sin membresia: OK");
-        }
-
-        // ---------- PASO 5 - RF-05: registrar una membresia ----------
-        System.out.println();
-        System.out.println("--- PASO 5 (RF-05): registrar una membresia ---");
-        List<TipoMembresia> tipos = membresiaCtrl.listarTipos();
-        if (tipos.isEmpty()) {
-            System.out.println("No hay tipos de membresia cargados en la base.");
-            System.out.println("Ejecute Insert.sql o registre un tipo antes de repetir la demostracion.");
-            return;
-        }
-        TipoMembresia tipo = elegirTipo(tipos);
-        LocalDate inicio = LocalDate.now();
-        LocalDate fin = inicio.plusDays(30);
-        System.out.println("Fechas de ejemplo para demostrar la vigencia: hoy y hoy + 30 dias.");
-        System.out.println("El tipo de membresia no define una duracion automatica.");
-
-        Membresia membresia = membresiaCtrl.registrarMembresia(cliente, tipo, inicio, fin);
-        System.out.println("Membresia guardada: id " + membresia.getIdMembresia()
-                + " | tipo " + membresia.getTipo().getNombre()
-                + " | " + membresia.getFechaInicio() + " a " + membresia.getFechaFin());
-        PASOS.add("RF-05 registro de membresia: OK (id " + membresia.getIdMembresia() + ")");
-
-        // ---------- PASO 6 - RF-04: consultar la vigencia ----------
-        System.out.println();
-        System.out.println("--- PASO 6 (RF-04): consultar la vigencia de sus membresias ---");
-        LocalDate hoy = LocalDate.now();
-        for (Membresia m : membresiaCtrl.consultarVigencia(dni)) {
-            System.out.println("  id " + m.getIdMembresia() + " | " + m.getFechaInicio()
-                    + " a " + m.getFechaFin() + " | estado: " + m.obtenerEstado(hoy));
-        }
-        PASOS.add("RF-04 consulta de vigencia: OK");
-
-        // ---------- PASO 7 - RF-06, RF-07, RF-08: ingreso autorizado ----------
-        System.out.println();
-        System.out.println("--- PASO 7 (RF-06, RF-07, RF-08): registrar un ingreso autorizado ---");
-        Ingreso ingreso = ingresoCtrl.registrarIngreso(dni);
-        System.out.println("Ingreso id " + ingreso.getIdIngreso());
-        System.out.println("  Cliente: " + ingreso.getCliente().getNombreCompleto());
-        System.out.println("  Membresia usada: " + ingreso.getMembresia().getIdMembresia());
-        System.out.println("  Registrado por: " + ingreso.getUsuario().getNombreCompleto());
-        System.out.println("  Fecha y hora: " + ingreso.getFechaHora());
-        PASOS.add("RF-06/07/08 ingreso autorizado: OK (id " + ingreso.getIdIngreso() + ")");
-
-        // ---------- PASO 8 - RF-01: rechazo de DNI duplicado ----------
-        System.out.println();
-        System.out.println("--- PASO 8 (RF-01): intentar registrar el mismo DNI otra vez ---");
-        try {
-            clienteCtrl.registrar(new Cliente(dni, "Duplicado", "Demostracion", null));
-            System.out.println("FALLO DE LA DEMOSTRACION: se acepto un DNI duplicado.");
-            PASOS.add("RF-01 rechazo de DNI duplicado: FALLO (se acepto)");
-        } catch (IllegalArgumentException e) {
-            System.out.println("Rechazado como se esperaba: " + e.getMessage());
-            PASOS.add("RF-01 rechazo de DNI duplicado: OK");
-        }
-
-        // ---------- PASO 9 - RF-16: operacion sin permiso ----------
-        System.out.println();
-        System.out.println("--- PASO 9 (RF-16): el recepcionista intenta ver un historial ---");
-        try {
-            ingresoCtrl.consultarHistorial(dni);
-            System.out.println("FALLO DE LA DEMOSTRACION: el recepcionista accedio al historial.");
-            PASOS.add("RF-16 restriccion por rol: FALLO (se permitio)");
-        } catch (IllegalStateException e) {
-            System.out.println("Rechazado como se esperaba: " + e.getMessage());
-            PASOS.add("RF-16 restriccion por rol: OK");
-        }
-
-        // ---------- PASO 10: cambiar a administrador ----------
-        System.out.println();
-        System.out.println("--- PASO 10: cerrar sesion e iniciar como ADMINISTRADOR ---");
-        sesion.cerrar();
-        System.out.println("Sesion del recepcionista cerrada.");
-        Usuario administrador;
-        try {
-            administrador = usuarioCtrl.iniciarSesion(
-                    leerTexto("Username del administrador: "),
-                    leerClave("Contrasena: "));
-        } catch (IllegalArgumentException e) {
-            System.out.println("No se pudo iniciar sesion: " + e.getMessage());
-            return;
-        }
-        if (!sesion.esAdministrador()) {
-            System.out.println("La cuenta '" + administrador.getUsername() + "' tiene rol "
-                    + administrador.getRol() + ".");
-            System.out.println("El ultimo paso necesita una cuenta de ADMINISTRADOR. Se termina aqui.");
-            return;
-        }
-        System.out.println("Sesion iniciada: " + administrador.getNombreCompleto()
-                + " (" + administrador.getRol() + ")");
-        PASOS.add("Cambio de rol a administrador: OK");
-
-        // ---------- PASO 11 - RF-09: historial del cliente ----------
-        System.out.println();
-        System.out.println("--- PASO 11 (RF-09): consultar el historial del cliente ---");
-        List<Ingreso> historial = ingresoCtrl.consultarHistorial(dni);
-        boolean apareceElIngreso = false;
-        for (Ingreso i : historial) {
-            System.out.println("  id " + i.getIdIngreso() + " | " + i.getFechaHora()
-                    + " | registrado por " + i.getUsuario().getUsername());
-            if (i.getIdIngreso() == ingreso.getIdIngreso()) {
-                apareceElIngreso = true;
-            }
-        }
-        System.out.println("Total de ingresos del cliente: " + historial.size());
-
-        if (apareceElIngreso && historial.size() == 1) {
-            System.out.println("Correcto: aparece el ingreso autorizado y el intento del paso 4");
-            System.out.println("no dejo ningun registro.");
-            PASOS.add("RF-09 historial de ingresos: OK");
-        } else if (!apareceElIngreso) {
-            System.out.println("FALLO: el ingreso id " + ingreso.getIdIngreso() + " no aparece.");
-            PASOS.add("RF-09 historial de ingresos: FALLO (falta el ingreso)");
-        } else {
-            System.out.println("FALLO: se esperaba un unico ingreso para un cliente nuevo.");
-            PASOS.add("RF-09 historial de ingresos: FALLO (" + historial.size() + " registros)");
-        }
-    }
-
-    /** Pide un DNI libre y construye el cliente de demostracion. */
-    private static Cliente pedirClienteNuevo(ClienteController clienteCtrl) throws SQLException {
-        while (true) {
-            String dni = leerTexto("DNI nuevo para el cliente de demostracion (8 digitos): ");
-            Cliente cliente;
-            try {
-                cliente = new Cliente(dni, "DEMO", "Cliente de prueba", "999000111");
-            } catch (IllegalArgumentException e) {
-                System.out.println(e.getMessage());
-                continue;
-            }
-            if (clienteCtrl.buscarCliente(dni) != null) {
-                System.out.println("Ese DNI ya esta registrado. Escriba otro; no se modificara el existente.");
-                continue;
-            }
-            return cliente;
-        }
-    }
-
-    private static TipoMembresia elegirTipo(List<TipoMembresia> tipos) {
-        System.out.println("Tipos de membresia disponibles:");
-        for (TipoMembresia t : tipos) {
-            System.out.println("  id " + t.getIdTipo() + " | " + t.getNombre() + " | S/ " + t.getPrecio());
-        }
-        while (true) {
-            String texto = leerTexto("Id del tipo que desea usar: ");
-            for (TipoMembresia t : tipos) {
-                if (String.valueOf(t.getIdTipo()).equals(texto.trim())) {
-                    return t;
-                }
-            }
-            System.out.println("Ese id no esta en la lista.");
-        }
-    }
-
-    private static String leerTexto(String etiqueta) {
+    private static String leer(String etiqueta) {
         System.out.print(etiqueta);
         return ENTRADA.nextLine().trim();
     }
 
-    private static String leerClave(String etiqueta) {
-        System.out.print(etiqueta);
+    /** La contrasena no se recorta: se compara tal como se escribe. */
+    private static String leerClave() {
+        System.out.print("Contrasena (visible al escribir): ");
         return ENTRADA.nextLine();
-    }
-
-    private static void mostrarResumen() {
-        System.out.println();
-        System.out.println("=== Resumen de la demostracion ===");
-        if (PASOS.isEmpty()) {
-            System.out.println("No se completo ningun paso.");
-            return;
-        }
-        for (String paso : PASOS) {
-            System.out.println("  " + paso);
-        }
     }
 }

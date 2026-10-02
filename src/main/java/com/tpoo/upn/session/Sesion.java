@@ -4,8 +4,8 @@ import com.tpoo.upn.model.Usuario;
 
 /**
  * Representa al usuario autenticado en la aplicacion.
- * No consulta la base de datos ni comprueba contrasenas: eso lo hara UsuarioController
- * antes de llamar a iniciar().
+ * No consulta la base de datos ni comprueba contrasenas: eso lo hace UsuarioService
+ * antes de llamar a iniciar(). Una misma instancia se comparte entre los cuatro servicios.
  */
 public class Sesion {
 
