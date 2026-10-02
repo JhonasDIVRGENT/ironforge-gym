@@ -1,6 +1,7 @@
 package com.tpoo.upn.service;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import com.tpoo.upn.dao.ClienteDAO;
 import com.tpoo.upn.model.Cliente;
@@ -62,6 +63,22 @@ public class ClienteService {
         }
 
         return clienteDAO.actualizar(cliente);
+    }
+
+    /**
+     * Ampliacion de usabilidad (aun no reflejada en el UML ni en el informe):
+     * permite elegir un cliente de una lista en lugar de escribir su DNI.
+     * La pueden usar ambos roles; no da permiso al administrador para registrar
+     * ni modificar clientes.
+     */
+    public List<Cliente> listarClientes() throws SQLException {
+        if (!sesion.haySesionActiva()) {
+            throw new IllegalStateException("Debe iniciar sesion para realizar esta operacion");
+        }
+        if (!sesion.esRecepcionista() && !sesion.esAdministrador()) {
+            throw new IllegalStateException("No tiene permiso para consultar la lista de clientes");
+        }
+        return clienteDAO.listar();
     }
 
     private void exigirRecepcionista() {

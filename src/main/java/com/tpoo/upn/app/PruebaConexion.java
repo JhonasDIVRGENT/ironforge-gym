@@ -1,11 +1,12 @@
 package com.tpoo.upn.app;
 
-import com.tpoo.upn.dao.ConexionDB;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import com.tpoo.upn.dao.ConexionDB;
+
 /**
- * Clase pequena para comprobar que la conexion a MySQL funciona.
+ * Clase pequeña para comprobar que la conexion a MySQL funciona.
  * abre y cierra conexion 
  */
 public class PruebaConexion {
