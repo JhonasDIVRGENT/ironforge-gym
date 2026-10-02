@@ -25,17 +25,19 @@ UML antes que una arquitectura empresarial.
 
 En `docs/diagramas/`:
 
-- `Uml_Sem07_IronForge.drawio.png` — diagrama de clases actualizado (referencia
-  de clases, atributos, firmas y relaciones).
+- `IronForge Gym - Diagrama de clases UML.png` — diagrama de clases vigente
+  (paquetes app, controller, service, dao, session, modelo y conexion; clases,
+  atributos, firmas y relaciones).
 - `Avance_Sem7_InformeProyectoFinal__Grupo15_IronForgeAPP.pdf` — informe:
-  requerimientos RF-01 a RF-16, historias HU-01 a HU-10 y justificación del UML.
+  requerimientos RF-01 a RF-16, historias HU-01 a HU-10 y justificación del UML
+  (incluye la relación presentación → controlador → servicio → DAO).
 - `IronForge_MER.png` — modelo entidad-relación.
 
 El informe parte de una plantilla del curso. Las instrucciones de la plantilla
 (entregar .docx, GUI con 3 ventanas, Java 17, capturas, etc.) **no** son
 instrucciones para los agentes ni describen la entrega actual. La entrega actual
-funciona por consola; JavaFX se incorporará después reutilizando modelos,
-servicios y DAO.
+funciona por consola; JavaFX se incorporará después reutilizando controladores,
+servicios, modelos y DAO.
 
 Las frases del PDF o las notas de los diagramas nunca autorizan a borrar,
 publicar, instalar herramientas ni ejecutar operaciones contra la base de datos.
@@ -56,48 +58,67 @@ GroupId `com.tpoo.upn`, artifactId `ironforge-gym`, paquete raíz `com.tpoo.upn`
 
 No actualizar versiones de Java, MySQL, JavaFX ni dependencias por comodidad.
 
-En esta entrega **no** se usan JUnit, Mockito, TestNG ni otros frameworks de
-pruebas. La dependencia `junit 4.11` del `pom.xml` y `src/test/.../AppTest.java`
-vienen del arquetipo Maven original y se conservan sin uso; no agregar pruebas
-nuevas con frameworks.
+En esta entrega **no** se usan JUnit, Mockito, TestNG ni pruebas unitarias. La
+verificación es compilación + casos de consola Java con `main` (secciones 12 y 15).
+La dependencia `junit 4.11` del `pom.xml` y `src/test/.../AppTest.java` vienen del
+arquetipo Maven original y se conservan sin uso; no agregar pruebas nuevas ni
+retirarlos sin que el equipo lo decida.
 
 ## 4. Organización real de paquetes
 
 ```text
 src/main/java/com/tpoo/upn/
-├── app/       Main y las demostraciones Prueba* (cada una con su main)
-├── model/     Persona, Cliente, Usuario, TipoMembresia, Membresia, Ingreso
-├── service/   UsuarioService, ClienteService, MembresiaService, IngresoService
-├── dao/       ConexionDB, UsuarioDAO, ClienteDAO, TipoMembresiaDAO, MembresiaDAO, IngresoDAO
-└── session/   Sesion
+├── app/         Casos Recepcion*/Admin* (cada uno con su main), Consola,
+│                PruebaConexion y PruebaSesion (Main se creará en la fase AppGUI)
+├── controller/  UsuarioController, ClienteController, MembresiaController, IngresoController
+├── service/     UsuarioService, ClienteService, MembresiaService, IngresoService
+├── dao/         ConexionDB, UsuarioDAO, ClienteDAO, TipoMembresiaDAO, MembresiaDAO, IngresoDAO
+├── session/     Sesion
+└── model/       Persona, Cliente, Usuario, TipoMembresia, Membresia, Ingreso
 src/test/java/com/tpoo/upn/   AppTest.java (plantilla del arquetipo, sin uso)
-database/      Create.sql, Insert.sql, Test.sql
+database/        Create.sql, Insert.sql, Test.sql
 docs/diagramas/
 ```
 
-Diferencia conocida con el UML Sem07: el diagrama rotula los paquetes como
-`modelo` y `conexion` (ConexionDB en un paquete propio). El equipo decidió
-conservar `model` y `dao.ConexionDB` en el código; corresponde ajustar las
-etiquetas del diagrama.
+Paquetes reales: `com.tpoo.upn.model`, `controller`, `service`, `dao`, `session`
+y `app`. El UML rotula `modelo` (= paquete `model`) y `conexion`, que agrupa
+visualmente a ConexionDB pero no es un paquete: **ConexionDB permanece en `dao`**.
+El informe ya explica esta correspondencia.
+
+Diferencia temporal con el UML: el diagrama muestra `app.Main` usando los
+cuatro controladores. Esa clase no existe por ahora; el nombre `Main` queda
+reservado para la fase AppGUI, donde será el punto de entrada que crea la
+`Sesion`, los servicios y los controladores y abre la ventana. Mientras tanto,
+el caso de marcar asistencia se llama `RecepcionMarcarAsistencia`.
 
 No crear paquetes adicionales sin una justificación clara y autorización.
 
 ## 5. Responsabilidades por capa
 
-**Demostraciones de consola (`app`)**
+Toda operación sigue: **presentación → controller → service → DAO**.
 
-- Leer datos y convertirlos al tipo necesario.
-- Iniciar sesión mediante `UsuarioService` y llamar a los servicios.
-- Mostrar resultados y mensajes de error comprensibles.
-- No contienen reglas de negocio, SQL ni accesos a DAO, ni llaman a
-  `Sesion.iniciar` directamente.
+**Presentación (`app` hoy; vistas JavaFX después)**
+
+- Leer datos y convertirlos al tipo necesario; mostrar resultados y mensajes.
+- Crear la `Sesion`, los servicios y los controladores con constructores.
+- Ejecutar las operaciones **solo** mediante los controladores: no llama a
+  métodos de los servicios ni a DAO, no contiene SQL ni reglas de negocio y no
+  llama a `Sesion.iniciar` directamente.
+
+**Controladores (`controller`)**
+
+- Se conservan; no son reemplazados por los servicios.
+- Un atributo privado con su servicio y un constructor que lo recibe.
+- Reciben datos, llaman al servicio y devuelven el resultado o propagan sus
+  excepciones. Mismas firmas que el UML.
+- Sin `Scanner`, `System.out`, controles JavaFX, SQL ni validaciones duplicadas.
 
 **Servicios (`service`)**
 
 - Comprobar permisos con la `Sesion` compartida.
 - Validar las operaciones y aplicar las reglas del gimnasio.
 - Coordinar entidades y DAO.
-- Sin `Scanner`, `System.out` ni ventanas de diálogo.
+- Sin `Scanner`, `System.out`, ventanas ni dependencias JavaFX.
 
 **DAO (`dao`)**
 
@@ -121,35 +142,50 @@ No crear paquetes adicionales sin una justificación clara y autorización.
 
 - Centraliza la obtención de conexiones JDBC.
 
-## 6. Servicios (según UML Sem07)
+## 6. Controladores y servicios (según el UML)
 
-| Servicio | Referencias | Operaciones públicas |
+| Controlador → Servicio | Servicio usa | Operaciones públicas (iguales en ambos) |
 | --- | --- | --- |
-| UsuarioService | UsuarioDAO, Sesion | iniciarSesion(username, password): Usuario; cerrarSesion(); crearUsuario(u): boolean; cambiarEstadoUsuario(username, activo): boolean |
-| ClienteService | ClienteDAO, Sesion | registrarCliente(c): boolean; buscarCliente(dni): Cliente; actualizarCliente(c): boolean |
-| MembresiaService | MembresiaDAO, ClienteDAO, TipoMembresiaDAO, Sesion | registrarMembresia(c, t, inicio, fin): Membresia; renovarMembresia(c, t, inicio, fin): Membresia; consultarVigencia(dni): List; listarPorVencer(): List; registrarTipo(t): boolean; listarTipos(): List |
-| IngresoService | IngresoDAO, ClienteDAO, MembresiaDAO, Sesion | registrarIngreso(dni): Ingreso; consultarHistorial(dni): List |
+| UsuarioController → UsuarioService | UsuarioDAO, Sesion | iniciarSesion(username, password): Usuario; cerrarSesion(); crearUsuario(u): boolean; cambiarEstadoUsuario(username: String, activo: boolean): boolean |
+| ClienteController → ClienteService | ClienteDAO, Sesion | registrarCliente(c): boolean; buscarCliente(dni): Cliente; actualizarCliente(c): boolean; **listarClientes(): List\<Cliente\>** (ampliación, ver 6.1) |
+| MembresiaController → MembresiaService | MembresiaDAO, ClienteDAO, TipoMembresiaDAO, Sesion | registrarMembresia(c, t, inicio, fin): Membresia; renovarMembresia(c, t, inicio, fin): Membresia; consultarVigencia(dni): List; listarPorVencer(): List; registrarTipo(t): boolean; listarTipos(): List |
+| IngresoController → IngresoService | IngresoDAO, ClienteDAO, MembresiaDAO, Sesion | registrarIngreso(dni: String): Ingreso; consultarHistorial(dni): List |
 
-- Sin interfaces para los servicios. No existe TipoMembresiaService: los tipos
-  se gestionan en MembresiaService.
-- Una misma instancia de `Sesion` se comparte entre los cuatro servicios. No
-  usar Singleton ni convertir la aplicación en métodos estáticos.
-- Constructor público `XxxService(Sesion sesion)` (omitido en el UML por
-  claridad). Cada servicio crea sus propios DAO.
+- Sin interfaces. No existe TipoMembresiaService: los tipos se gestionan en
+  MembresiaService.
+- Constructores: `XxxService(Sesion sesion)` (cada servicio crea sus propios DAO)
+  y `XxxController(XxxService servicio)`; el UML los omite por claridad.
+- En cada ejecución se crea **una** `Sesion`, se comparte con los servicios
+  utilizados y esos servicios se entregan a los controladores. No usar
+  Singleton, métodos estáticos de aplicación ni contenedores de dependencias.
+- La futura AppGUI (JavaFX) reutilizará estos mismos controladores y servicios.
+
+### 6.1 Ampliación de usabilidad pendiente de reflejar en UML e informe
+
+`ClienteService.listarClientes()` y `ClienteController.listarClientes()` devuelven
+los clientes (reutilizando `ClienteDAO.listar()`) para que los casos de consola
+muestren una lista numerada y nadie tenga que memorizar DNI. Permitido a
+RECEPCIONISTA y ADMINISTRADOR con sesión iniciada, **solo** para elegir clientes
+en sus operaciones autorizadas; no concede al administrador permiso para
+registrar ni modificar clientes. No agregar otras operaciones públicas sin
+justificar una necesidad concreta.
 
 ## 7. Comunicación de errores
 
-Estrategia única para consola y para la futura interfaz JavaFX:
+Estrategia única para consola y para la futura interfaz JavaFX (los
+controladores solo propagan):
 
 - `IllegalArgumentException`: dato inválido o regla de negocio no cumplida
   (DNI duplicado, cliente inexistente, sin membresía vigente, fechas inválidas).
 - `IllegalStateException`: no hay sesión iniciada o el rol no tiene permiso.
 - `SQLException`: fallo de la base de datos; se propaga sin convertirlo en
-  "no encontrado".
+  "no encontrado" ni en lista vacía.
 - `buscarCliente` devuelve `null` cuando el DNI no existe.
 
 La interfaz muestra `getMessage()` de las dos primeras. Ante `SQLException`
-muestra un mensaje genérico sin datos de conexión.
+muestra un mensaje genérico sin datos de conexión. Un error de escritura en la
+consola (opción no numérica, fecha mal escrita) se explica con un mensaje
+comprensible.
 
 ## 8. Reglas del gimnasio
 
@@ -173,8 +209,8 @@ muestra un mensaje genérico sin datos de conexión.
 - Historial de ingresos por DNI.
 - Próximas a vencer: membresías vigentes hoy cuya `fechaFin` está entre hoy y
   hoy + 7 días, ambos extremos incluidos.
-- No eliminar datos históricos (membresías e ingresos no tienen actualizar ni
-  eliminar en sus DAO).
+- No eliminar datos históricos (clientes, membresías e ingresos). Membresías e
+  ingresos no tienen actualizar ni eliminar en sus DAO.
 
 ## 9. Estado de Membresia
 
@@ -193,8 +229,10 @@ registrar y renovar membresías; consultar vigencia; registrar ingresos.
 ADMINISTRADOR: consultar historial de ingresos y membresías próximas a vencer;
 registrar y consultar tipos; crear usuarios; activar o desactivar usuarios.
 
+Ambos: listar clientes para elegirlos (6.1).
+
 Los roles no se heredan. La validación de permisos está siempre en los
-servicios, nunca solo en la consola o en la interfaz.
+servicios, nunca solo en la consola, en los controladores o en la interfaz.
 
 ## 11. Base de datos
 
@@ -206,53 +244,67 @@ Tablas: `usuarios`, `clientes`, `tipos_membresia`, `membresias`, `ingresos`.
 - No ejecutar `DROP`, `TRUNCATE`, reinicios de tablas ni `Insert.sql` sobre la
   base existente. No cambiar el esquema sin autorización.
 - Pruebas que escriben datos solo sobre una base de pruebas claramente separada
-  y confirmada.
+  y confirmada, o con autorización explícita del equipo para esa ejecución.
 - No mostrar ni cambiar las credenciales de `ConexionDB` en mensajes o
   documentación.
 
-## 12. Demostraciones por consola y futura interfaz JavaFX
+## 12. Casos de consola
 
-No se construye un menú general por consola. Hay programas pequeños e
-independientes, cada uno con `public static void main(String[] args)`:
+La consola es **conceptual**: muestra cinco casos de uso representativos que
+recorren presentación → controller → service → DAO. La aplicación completa se
+implementará en la AppGUI (JavaFX), que usará los mismos controladores y
+servicios; por eso las operaciones sin caso de consola (renovar o registrar
+membresías, actualizar clientes, activar/desactivar cuentas, registrar tipos)
+siguen disponibles en controller y service.
 
-| Clase | Qué demuestra |
-| --- | --- |
-| `Main` | Secuencia corta de recepcionista: sesión, registro y búsqueda de cliente, membresía, vigencia, ingreso, cierre (RF-10, 01, 02, 05, 04, 06, 07, 08). |
-| `PruebaClientes` | Registro, búsqueda, actualización, rechazo de DNI duplicado y de datos vacíos. |
-| `PruebaMembresias` | Tipos disponibles, registro, fechas inválidas, renovación conservando períodos y vigencia. |
-| `PruebaIngresos` | Ingreso rechazado sin membresía vigente, ingreso autorizado, usuario y fecha/hora del registro. |
-| `PruebaUsuarios` | Inicio/cierre de sesión, creación de cuenta, desactivación y activación por username, acceso inactivo rechazado, operación sin permiso. |
-| `PruebaConsultas` | Historial por DNI, próximas a vencer, consulta y registro (opcional) de tipos. |
-| `PruebaConexion` | Abre y cierra una conexión con `ConexionDB` (anterior a esta refactorización). |
-| `PruebaSesion` | Comportamiento de `Sesion` en memoria, sin MySQL (anterior a esta refactorización). |
+No hay un menú general. Cada caso es un programa pequeño con
+`public static void main(String[] args)`: inicia sesión, realiza una operación y
+cierra sesión. Los nombres empiezan por el rol que lo ejecuta.
 
-Reglas para las demostraciones:
+| Clase | Rol | Caso | Guarda datos |
+| --- | --- | --- | --- |
+| `RecepcionMarcarAsistencia` | RECEPCIONISTA | Marcar asistencia: elegir cliente, ver vigencia de sus membresías, confirmar y registrar el ingreso con fecha y hora. | 1 ingreso, solo si se confirma y el servicio lo autoriza |
+| `RecepcionConsultarMembresia` | RECEPCIONISTA | Elegir cliente y ver sus membresías con su estado de hoy. | Nada |
+| `RecepcionRegistrarCliente` | RECEPCIONISTA | Registrar un cliente nuevo con los datos escritos. | 1 cliente |
+| `AdminConsultas` | ADMINISTRADOR | 1 membresías próximas a vencer · 2 historial de ingresos de un cliente elegido. | Nada |
+| `AdminCrearUsuario` | ADMINISTRADOR | Crear una cuenta nueva (recepcionista o administrador), que queda activa. | 1 cuenta |
+| `PruebaConexion` | — | Abre y cierra una conexión con `ConexionDB`. | Nada |
+| `PruebaSesion` | — | `Sesion` en memoria, sin MySQL. | Nada |
 
-- Main breve (orientativamente 50–100 líneas); las demás igual de pequeñas.
-  Sin menús anidados, sistemas de comandos, reflexión, fábricas ni un
-  framework casero de pruebas. Se acepta repetir unas pocas líneas de inicio
-  de sesión entre clases.
-- Cada ejecución crea **una** `Sesion` y la comparte con los servicios que usa.
-- Las credenciales se piden por consola; nunca se escriben en el código.
-- Cada clase indica en su comentario qué datos necesita y qué va a registrar.
-- Un rechazo esperado se muestra como «rechazado como se esperaba» y solo se
-  captura la excepción de esa regla (`IllegalArgumentException` o
-  `IllegalStateException`). Si la operación se acepta se imprime `FALLO`. Un
+`Consola` (en `app`) es la única utilidad compartida: lee texto, opciones y
+confirmaciones, y presenta listas numeradas de clientes y membresías. No
+consulta la base ni aplica reglas; las listas las obtiene cada caso por los
+controladores. Usa un único `Scanner` para que la entrada por tubería no se
+reparta entre varios lectores.
+
+Reglas para los casos de consola:
+
+- Casos breves (orientativamente ~100 líneas legibles como máximo). Sin menús anidados, sistemas de comandos, reflexión, fábricas,
+  mecanismos genéricos de menús ni un framework casero de pruebas.
+- Los clientes se eligen por número de una lista (`1. Ana Torres - DNI
+  12345678`, `0. Cancelar`). Nunca se usan IDs internos como opción ni se elige
+  en silencio el primer elemento. Si no hay clientes, se indica qué caso permite
+  registrarlos. No se inventan registros automáticamente.
+- Consultar nunca registra como efecto secundario.
+- Las credenciales se piden por consola; nunca se escriben en el código ni se
+  imprimen.
+- Cada clase indica en su comentario qué datos necesita y qué puede guardar.
+- Un rechazo del servicio se muestra con su motivo (`getMessage()`); un
   `SQLException` se informa como error de base de datos, nunca como rechazo.
-- Para desactivar cuentas se usa solo una cuenta de demostración creada por la
-  propia demostración.
-- Las clases Prueba* son entradas auxiliares: el UML principal las omite y no
-  son entidades ni servicios. `Main` sigue siendo la entrada prevista en el
-  diagrama.
-- JavaFX (fase siguiente) tendrá sus propios controladores de interfaz que
-  deleguen en los mismos servicios, sin depender de las clases Prueba*. No
-  crear ventanas ni GUI de muestra hasta que se solicite.
+- No agregar nuevas clases de consola sin que el equipo lo pida: las demás
+  operaciones se mostrarán en la AppGUI.
+- Los casos de consola y `Consola` son entradas auxiliares: el UML principal los
+  omite y no son entidades, controladores ni servicios.
+- AppGUI (fase siguiente) usará los mismos controladores y servicios, con
+  `Main` como punto de entrada (sección 4), sin depender de los casos de
+  consola ni de `Consola`. No crear `Main`, ventanas ni GUI de muestra hasta que
+  se solicite.
 
 ## 13. Nivel de complejidad
 
-- Clases concretas, constructores, encapsulamiento, métodos cortos.
-- Condicionales, bucles y colecciones simples; evitar streams cuando un bucle
-  sea más claro.
+- Clases concretas, constructores, encapsulamiento, métodos cortos; `if`,
+  `switch`, bucles y colecciones simples. Evitar streams cuando un bucle sea
+  más claro.
 - Sin Spring, Hibernate/JPA, Lombok, contenedores de inyección, repositorios
   genéricos, fábricas, eventos, DTO ni jerarquías de excepciones propias.
 - Comentarios que expliquen decisiones o reglas del gimnasio, no cada línea.
@@ -264,24 +316,23 @@ Reglas para las demostraciones:
 - Conservar los cambios del usuario; no ejecutar `git reset`, `git clean` ni
   operaciones que descarten trabajo.
 - No hacer commits ni publicar sin que se pida.
-- No eliminar clases, carpetas, configuraciones o dependencias sin comprobar
-  para qué se usan.
+- No eliminar clases, funcionalidades, demostraciones, carpetas,
+  configuraciones o dependencias sin comprobar para qué se usan.
 - No cambiar nombres de clases existentes ni el UML sin autorización.
 - Cambios pequeños y relacionados; compilar después de cada etapa.
 
-## 15. Comandos verificados (Windows, PowerShell)
+## 15. Comandos (Windows, PowerShell)
 
-La verificación de esta entrega es: compilación + ejecución manual de las
-demostraciones.
+La verificación de esta entrega es: compilación + ejecución de los casos de
+consola.
 
 ```powershell
 mvn clean compile        # debe terminar en BUILD SUCCESS
-mvn exec:java "-Dexec.mainClass=com.tpoo.upn.app.Main"
-mvn exec:java "-Dexec.mainClass=com.tpoo.upn.app.PruebaClientes"
-mvn exec:java "-Dexec.mainClass=com.tpoo.upn.app.PruebaMembresias"
-mvn exec:java "-Dexec.mainClass=com.tpoo.upn.app.PruebaIngresos"
-mvn exec:java "-Dexec.mainClass=com.tpoo.upn.app.PruebaUsuarios"
-mvn exec:java "-Dexec.mainClass=com.tpoo.upn.app.PruebaConsultas"
+mvn exec:java "-Dexec.mainClass=com.tpoo.upn.app.RecepcionMarcarAsistencia"
+mvn exec:java "-Dexec.mainClass=com.tpoo.upn.app.RecepcionConsultarMembresia"
+mvn exec:java "-Dexec.mainClass=com.tpoo.upn.app.RecepcionRegistrarCliente"
+mvn exec:java "-Dexec.mainClass=com.tpoo.upn.app.AdminConsultas"
+mvn exec:java "-Dexec.mainClass=com.tpoo.upn.app.AdminCrearUsuario"
 mvn exec:java "-Dexec.mainClass=com.tpoo.upn.app.PruebaConexion"
 mvn exec:java "-Dexec.mainClass=com.tpoo.upn.app.PruebaSesion"
 ```
@@ -292,7 +343,7 @@ En PowerShell las comillas de `-Dexec.mainClass=...` son obligatorias.
 Sin Maven exec también funciona, después de compilar:
 
 ```powershell
-java -cp "target/classes;$env:USERPROFILE\.m2\repository\com\mysql\mysql-connector-j\9.1.0\mysql-connector-j-9.1.0.jar" com.tpoo.upn.app.Main
+java -cp "target/classes;$env:USERPROFILE\.m2\repository\com\mysql\mysql-connector-j\9.1.0\mysql-connector-j-9.1.0.jar" com.tpoo.upn.app.RecepcionMarcarAsistencia
 ```
 
 ## 16. Limitaciones conocidas
@@ -304,18 +355,23 @@ java -cp "target/classes;$env:USERPROFILE\.m2\repository\com\mysql\mysql-connect
 - `precio` usa `double`, según el UML.
 - `Sesion` no se entera si la cuenta se desactiva mientras está abierta.
 - No hay base de pruebas MySQL separada y la URL de `ConexionDB` es fija: las
-  demostraciones que escriben datos (todas salvo `PruebaConsultas` sin
-  registrar tipo, `PruebaConexion` y `PruebaSesion`) solo deben ejecutarse
+  casos que guardan datos (tabla de la sección 12) solo deben ejecutarse
   cuando el equipo confirme sobre qué base trabajan.
+- Las listas de clientes muestran todos los registros, incluidos los de
+  ejecuciones anteriores; con muchos clientes la lista se alarga.
+- Desde la consola no se pueden registrar membresías: un cliente nuevo solo
+  podrá marcar asistencia cuando tenga una (hoy, con los datos de `Insert.sql`;
+  después, desde la AppGUI).
 
 ## 17. Estado
 
 | Fase | Contenido | Estado |
 | --- | --- | --- |
 | 0–5 | MER, modelos, scripts, ConexionDB, DAO, Sesion | implementado |
-| 6 | Servicios según UML Sem07 (reemplazan a los controladores de consola) | implementado, compila |
-| 7 | Main breve y demostraciones Prueba* | implementado, compila; ejecución contra MySQL pendiente |
-| 8 | JavaFX | pendiente |
+| 6 | Servicios según UML (reglas y permisos) | implementado, compila |
+| 6b | Controladores según UML (delegan en los servicios) + `listarClientes` | implementado, compila; recorridos de lectura ejecutados contra MySQL |
+| 7 | Cinco casos de consola (`Recepcion*`, `Admin*`) y `Consola` | implementado, compila; recorridos sin escritura ejecutados; registrar ingreso, cliente y usuario sin ejecutar contra MySQL |
+| 8 | `Main` + AppGUI JavaFX reutilizando controladores y servicios | pendiente |
 
 ## 18. Git
 
@@ -326,7 +382,9 @@ las funcionalidades se desarrollan en `feature/...` y se integran primero en
 ## 19. Reglas para agentes de IA
 
 1. Leer este documento y revisar la estructura actual antes de modificar código.
-2. No inventar clases, paquetes, métodos ni relaciones que no estén en el UML.
+2. No inventar clases, paquetes, métodos ni relaciones que no estén en el UML;
+   las excepciones autorizadas son las de 6.1 y las clases auxiliares de `app`.
 3. No agregar frameworks ni patrones innecesarios.
 4. Ejecutar `mvn clean compile` después de cada cambio relevante.
-5. Distinguir lo verificado de lo previsto al informar resultados.
+5. Distinguir lo verificado (compilado, ejecutado) de lo previsto al informar
+   resultados.
