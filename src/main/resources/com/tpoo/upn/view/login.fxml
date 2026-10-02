@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.tpoo.upn.gui.LoginViewController" styleClass="login-fondo">
+    <padding>
+        <Insets top="24" right="24" bottom="24" left="24"/>
+    </padding>
+
+    <VBox styleClass="login-panel" maxHeight="-Infinity">
+        <!-- Identidad: emblema y nombre sobre un fondo de puntos discreto -->
+        <VBox styleClass="login-identidad, fondo-puntos">
+            <HBox alignment="CENTER" spacing="12">
+                <ImageView fitWidth="44" fitHeight="44" preserveRatio="true" smooth="true">
+                    <Image url="@../images/emblema.png"/>
+                </ImageView>
+                <VBox alignment="CENTER_LEFT" spacing="2">
+                    <Label text="IRONFORGE" styleClass="marca-nombre"/>
+                    <Label text="/ GYM SYSTEM" styleClass="marca-subtitulo"/>
+                </VBox>
+            </HBox>
+            <Label text="Gestión de clientes y accesos" styleClass="descripcion"/>
+        </VBox>
+
+        <VBox styleClass="login-formulario">
+            <Label fx:id="lblMensaje" styleClass="mensaje" maxWidth="Infinity" wrapText="true"
+                   visible="false" managed="false"/>
+
+            <Label text="USUARIO" styleClass="etiqueta"/>
+            <TextField fx:id="txtUsuario" promptText="Nombre de usuario" styleClass="campo-mono"/>
+
+            <Label text="CONTRASEÑA" styleClass="etiqueta"/>
+            <PasswordField fx:id="txtClave" promptText="Contraseña"/>
+
+            <Button minWidth="-Infinity" fx:id="btnIngresar" text="Iniciar sesión" defaultButton="true"
+                    onAction="#iniciarSesion" styleClass="boton-primario" maxWidth="Infinity"/>
+        </VBox>
+
+       
+    </VBox>
+</StackPane>

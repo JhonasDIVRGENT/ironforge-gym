@@ -16,6 +16,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
+    <!-- JavaFX 21 es la version LTS compatible con el JDK 21 del proyecto. -->
+    <javafx.version>21.0.5</javafx.version>
   </properties>
 
   <dependencies>
@@ -32,9 +34,32 @@
       <artifactId>mysql-connector-j</artifactId>
       <version>9.1.0</version>
     </dependency>
+
+    <!-- JavaFX para la interfaz grafica: controles y carga de vistas FXML. -->
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-controls</artifactId>
+      <version>${javafx.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-fxml</artifactId>
+      <version>${javafx.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
+    <plugins>
+      <!-- Permite abrir la interfaz grafica con: mvn javafx:run -->
+      <plugin>
+        <groupId>org.openjfx</groupId>
+        <artifactId>javafx-maven-plugin</artifactId>
+        <version>0.0.8</version>
+        <configuration>
+          <mainClass>com.tpoo.upn.app.Main</mainClass>
+        </configuration>
+      </plugin>
+    </plugins>
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
       <plugins>
         <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
