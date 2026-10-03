@@ -1,9 +1,5 @@
 package com.tpoo.upn.model;
 
-/**
- * Usuario del personal que opera el sistema.
- * Hereda nombres y apellidos de Persona.
- */
 public class Usuario extends Persona {
 
     public static final String ROL_ADMINISTRADOR = "ADMINISTRADOR";
@@ -15,11 +11,7 @@ public class Usuario extends Persona {
     private String rol;
     private boolean activo;
 
-    /**
-     * Constructor usado antes de insertar el usuario en la base de datos.
-     * Solo crea el objeto en memoria: no guarda nada en MySQL.
-     * El idUsuario queda en 0 y el usuario nuevo nace activo.
-     */
+    // Usuario nuevo, aun sin id; nace activo.
     public Usuario(String nombres, String apellidos, String username, String password, String rol) {
         super(nombres, apellidos);
         setUsername(username);
@@ -28,10 +20,7 @@ public class Usuario extends Persona {
         setActivo(true);
     }
 
-    /**
-     * Constructor usado al recuperar el usuario desde la base de datos.
-     * Tampoco consulta MySQL: solo recibe los datos que el DAO ya leyo.
-     */
+    // Usuario leido de la base de datos.
     public Usuario(int idUsuario, String nombres, String apellidos, String username,
             String password, String rol, boolean activo) {
         this(nombres, apellidos, username, password, rol);
@@ -44,7 +33,6 @@ public class Usuario extends Persona {
     }
 
     public void setIdUsuario(int idUsuario) {
-        // 0 significa "aun sin id en la base de datos"; un id negativo no existe.
         if (idUsuario < 0) {
             throw new IllegalArgumentException("El id del usuario no puede ser negativo");
         }
@@ -59,7 +47,6 @@ public class Usuario extends Persona {
         if (username == null || username.isBlank()) {
             throw new IllegalArgumentException("El username es obligatorio");
         }
-        // La columna username del SQL admite como maximo 50 caracteres.
         if (username.length() > 50) {
             throw new IllegalArgumentException("El username no puede pasar de 50 caracteres");
         }
@@ -70,7 +57,6 @@ public class Usuario extends Persona {
         return password;
     }
 
-    /** La contrasena se guarda tal como llega: no se recorta ni se transforma. */
     public void setPassword(String password) {
         if (password == null || password.isBlank()) {
             throw new IllegalArgumentException("La contrasena es obligatoria");

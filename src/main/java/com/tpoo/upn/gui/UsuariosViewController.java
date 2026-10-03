@@ -1,7 +1,7 @@
 package com.tpoo.upn.gui;
 
-import com.tpoo.upn.controller.UsuarioController;
 import com.tpoo.upn.model.Usuario;
+import com.tpoo.upn.service.UsuarioService;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -9,10 +9,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
-/**
- * Eventos de UsuariosView.fxml (RF-13 y RF-14), solo para el administrador.
- * Las contrasenas nunca se muestran; el campo se vacia al terminar.
- */
 public class UsuariosViewController {
 
     @FXML private Label lblMensajeCrear;
@@ -27,11 +23,11 @@ public class UsuariosViewController {
     @FXML private Button btnActivar;
     @FXML private Button btnDesactivar;
 
-    private UsuarioController usuarioController;
+    private UsuarioService usuarioService;
     private Usuario usuarioActual;
 
-    public void inicializar(UsuarioController usuarioController, Usuario usuarioActual) {
-        this.usuarioController = usuarioController;
+    public void inicializar(UsuarioService usuarioService, Usuario usuarioActual) {
+        this.usuarioService = usuarioService;
         this.usuarioActual = usuarioActual;
         cmbRol.getItems().setAll(Usuario.ROL_RECEPCIONISTA, Usuario.ROL_ADMINISTRADOR);
     }
@@ -40,7 +36,6 @@ public class UsuariosViewController {
     private void crearUsuario() {
         Usuario nuevo;
         try {
-            // El constructor de Usuario valida los datos obligatorios y el rol.
             nuevo = new Usuario(txtNombres.getText().trim(), txtApellidos.getText().trim(),
                     txtUsername.getText().trim(), txtClave.getText(), cmbRol.getValue());
         } catch (IllegalArgumentException e) {
@@ -48,7 +43,7 @@ public class UsuariosViewController {
             return;
         }
 
-        Tarea.ejecutar(() -> usuarioController.crearUsuario(nuevo), creado -> {
+        Tarea.ejecutar(() -> usuarioService.crearUsuario(nuevo), creado -> {
             if (!creado) {
                 Mensajes.error(lblMensajeCrear, "No se creó la cuenta. Intente de nuevo.");
                 return;
@@ -85,7 +80,7 @@ public class UsuariosViewController {
 
     private void cambiarEstado(boolean activo) {
         String username = txtUsernameEstado.getText().trim();
-        Tarea.ejecutar(() -> usuarioController.cambiarEstadoUsuario(username, activo), cambiado -> {
+        Tarea.ejecutar(() -> usuarioService.cambiarEstadoUsuario(username, activo), cambiado -> {
             if (!cambiado) {
                 Mensajes.error(lblMensajeEstado, "No se actualizó la cuenta. Intente de nuevo.");
                 return;

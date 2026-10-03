@@ -25,19 +25,21 @@ UML antes que una arquitectura empresarial.
 
 En `docs/diagramas/`:
 
-- `IronForge Gym - Diagrama de clases UML.png` — diagrama de clases vigente
+- `IronForge Gym - Diagrama de clases UML.png` — diagrama de clases
   (paquetes app, controller, service, dao, session, modelo y conexion; clases,
-  atributos, firmas y relaciones).
+  atributos, firmas y relaciones). **Desactualizado:** el paquete `controller`
+  ya no existe en el código (ver 4); el equipo actualizará el UML.
 - `Avance_Sem7_InformeProyectoFinal__Grupo15_IronForgeAPP.pdf` — informe:
   requerimientos RF-01 a RF-16, historias HU-01 a HU-10 y justificación del UML
-  (incluye la relación presentación → controlador → servicio → DAO).
+  (todavía describe presentación → controlador → servicio → DAO; pendiente de
+  actualizar a presentación → servicio → DAO).
 - `IronForge_MER.png` — modelo entidad-relación.
 
 El informe parte de una plantilla del curso. Las instrucciones de la plantilla
 (entregar .docx, GUI con 3 ventanas, Java 17, capturas, etc.) **no** son
 instrucciones para los agentes ni describen la entrega actual. La entrega tiene
 una interfaz gráfica JavaFX (`Main` → `AppGUI`) y casos de consola; ambas
-reutilizan los mismos controladores, servicios, modelos y DAO.
+reutilizan los mismos servicios, modelos y DAO.
 
 Las referencias visuales de la interfaz (DESIGN.md, HTML y capturas de Stitch)
 solo definen la estética. Las funciones las determinan el informe y el backend:
@@ -83,7 +85,6 @@ src/main/java/com/tpoo/upn/
 │                MembresiasViewController, ConsultasViewController,
 │                TiposMembresiaViewController, UsuariosViewController) y las ayudas
 │                Tarea, Mensajes y Formato
-├── controller/  UsuarioController, ClienteController, MembresiaController, IngresoController
 ├── service/     UsuarioService, ClienteService, MembresiaService, IngresoService
 ├── dao/         ConexionDB, UsuarioDAO, ClienteDAO, TipoMembresiaDAO, MembresiaDAO, IngresoDAO
 ├── session/     Sesion
@@ -98,16 +99,17 @@ database/        Create.sql, Insert.sql, Test.sql
 docs/diagramas/
 ```
 
-Paquetes reales: `com.tpoo.upn.model`, `controller`, `service`, `dao`, `session`,
-`app` y `gui`. El UML rotula `modelo` (= paquete `model`) y `conexion`, que agrupa
+Paquetes reales: `com.tpoo.upn.model`, `service`, `dao`, `session`, `app` y
+`gui`. El paquete `controller` se retiró (decisión del equipo, 2026-10-02): sus
+clases solo delegaban en los servicios. No volver a crearlo. El UML rotula `modelo` (= paquete `model`) y `conexion`, que agrupa
 visualmente a ConexionDB pero no es un paquete: **ConexionDB permanece en `dao`**.
 El informe ya explica esta correspondencia.
 
 `app.Main` es la entrada del UML. Solo llama a `Application.launch(AppGUI.class)`:
 en un proyecto sin `module-info`, Java no puede iniciar directamente desde el
-classpath una clase que extiende `Application`. `AppGUI` crea la `Sesion`, los
-servicios y los cuatro controladores. Pendiente de reflejar en el UML: `AppGUI`,
-el paquete `gui` y la relación Main → AppGUI → controladores.
+classpath una clase que extiende `Application`. `AppGUI` crea la `Sesion` y los
+cuatro servicios. Pendiente de reflejar en el UML: `AppGUI`, el paquete `gui`,
+la relación Main → AppGUI → servicios y la retirada de `controller`.
 
 FXML, CSS e imágenes se cargan desde el classpath (`AppGUI.class.getResource`,
 `@../images/...` en FXML, `url("../images/...")` en CSS), nunca con rutas
@@ -117,38 +119,28 @@ No crear paquetes adicionales sin una justificación clara y autorización.
 
 ## 5. Responsabilidades por capa
 
-Toda operación sigue: **presentación → controller → service → DAO**. En la
-interfaz gráfica: vista FXML → controlador de eventos de la vista (`gui`) →
-controlador existente (`controller`) → servicio → DAO.
+Toda operación sigue: **presentación → service → DAO**. En la interfaz
+gráfica: vista FXML → controlador de eventos de la vista (`gui`) → servicio →
+DAO.
 
 **Presentación (casos de consola en `app`; vistas FXML + `gui`)**
 
 - Leer datos y convertirlos al tipo necesario; mostrar resultados y mensajes.
-- Crear la `Sesion`, los servicios y los controladores con constructores
-  (en la GUI lo hace solo `AppGUI`, una vez por ejecución).
-- Ejecutar las operaciones **solo** mediante los controladores: no llama a
-  métodos de los servicios ni a DAO, no contiene SQL ni reglas de negocio y no
-  llama a `Sesion.iniciar` directamente.
+- Crear la `Sesion` y los servicios con constructores (en la GUI lo hace solo
+  `AppGUI`, una vez por ejecución).
+- Ejecutar las operaciones **solo** mediante los servicios: no usa DAO, no
+  contiene SQL ni reglas de negocio y no llama a `Sesion.iniciar`
+  directamente.
 - Ocultar opciones no permitidas es solo comodidad: el permiso real lo
   comprueba el servicio.
 
-**Controladores (`controller`)**
-
-- Se conservan; no son reemplazados por los servicios.
-- Un atributo privado con su servicio y un constructor que lo recibe.
-- Reciben datos, llaman al servicio y devuelven el resultado o propagan sus
-  excepciones. Mismas firmas que el UML.
-- Sin `Scanner`, `System.out`, controles JavaFX, SQL ni validaciones duplicadas.
-- Si la GUI necesitara un ajuste, hacer el cambio mínimo y conservar las firmas
-  que usa la consola. No quitar métodos ni cambiar su comportamiento.
-
 **Controladores de eventos de las vistas (`gui`)**
 
-- Nombre `XxxViewController`, para distinguirlos de los controladores de
-  `controller`. Reciben los controladores que usan mediante un método
-  `inicializar(...)` llamado después de cargar el FXML.
-- Solo leen campos, convierten entradas, llaman al controlador existente,
-  actualizan la pantalla y muestran resultados o errores.
+- Nombre `XxxViewController` (los usa el FXML con `fx:controller`). Reciben
+  los servicios que usan mediante un método `inicializar(...)` llamado después
+  de cargar el FXML.
+- Solo leen campos, convierten entradas, llaman al servicio, actualizan la
+  pantalla y muestran resultados o errores.
 - Las llamadas a MySQL se ejecutan con `Tarea` (un `Task` de JavaFX en un hilo
   aparte); el resultado se aplica en el hilo de JavaFX y el botón queda
   deshabilitado mientras dura, para evitar doble envío.
@@ -183,28 +175,26 @@ controlador existente (`controller`) → servicio → DAO.
 
 - Centraliza la obtención de conexiones JDBC.
 
-## 6. Controladores y servicios (según el UML)
+## 6. Servicios
 
-| Controlador → Servicio | Servicio usa | Operaciones públicas (iguales en ambos) |
+| Servicio | Usa | Operaciones públicas |
 | --- | --- | --- |
-| UsuarioController → UsuarioService | UsuarioDAO, Sesion | iniciarSesion(username, password): Usuario; cerrarSesion(); crearUsuario(u): boolean; cambiarEstadoUsuario(username: String, activo: boolean): boolean |
-| ClienteController → ClienteService | ClienteDAO, Sesion | registrarCliente(c): boolean; buscarCliente(dni): Cliente; actualizarCliente(c): boolean; **listarClientes(): List\<Cliente\>** (ampliación, ver 6.1) |
-| MembresiaController → MembresiaService | MembresiaDAO, ClienteDAO, TipoMembresiaDAO, Sesion | registrarMembresia(c, t, inicio, fin): Membresia; renovarMembresia(c, t, inicio, fin): Membresia; consultarVigencia(dni): List; listarPorVencer(): List; registrarTipo(t): boolean; listarTipos(): List |
-| IngresoController → IngresoService | IngresoDAO, ClienteDAO, MembresiaDAO, Sesion | registrarIngreso(dni: String): Ingreso; consultarHistorial(dni): List |
+| UsuarioService | UsuarioDAO, Sesion | iniciarSesion(username, password): Usuario; cerrarSesion(); crearUsuario(u): boolean; cambiarEstadoUsuario(username: String, activo: boolean): boolean |
+| ClienteService | ClienteDAO, Sesion | registrarCliente(c): boolean; buscarCliente(dni): Cliente; actualizarCliente(c): boolean; **listarClientes(): List\<Cliente\>** (ampliación, ver 6.1) |
+| MembresiaService | MembresiaDAO, ClienteDAO, TipoMembresiaDAO, Sesion | registrarMembresia(c, t, inicio, fin): Membresia; renovarMembresia(c, t, inicio, fin): Membresia; consultarVigencia(dni): List; listarPorVencer(): List; registrarTipo(t): boolean; listarTipos(): List |
+| IngresoService | IngresoDAO, ClienteDAO, MembresiaDAO, Sesion | registrarIngreso(dni: String): Ingreso; consultarHistorial(dni): List |
 
 - Sin interfaces. No existe TipoMembresiaService: los tipos se gestionan en
   MembresiaService.
-- Constructores: `XxxService(Sesion sesion)` (cada servicio crea sus propios DAO)
-  y `XxxController(XxxService servicio)`; el UML los omite por claridad.
-- En cada ejecución se crea **una** `Sesion`, se comparte con los servicios
-  utilizados y esos servicios se entregan a los controladores. No usar
-  Singleton, métodos estáticos de aplicación ni contenedores de dependencias.
-- `AppGUI` y los casos de consola usan estos mismos controladores y servicios.
+- Constructor: `XxxService(Sesion sesion)` (cada servicio crea sus propios DAO).
+- En cada ejecución se crea **una** `Sesion` y se comparte con los servicios
+  utilizados. No usar Singleton, métodos estáticos de aplicación ni
+  contenedores de dependencias.
+- `AppGUI` y los casos de consola usan estos mismos servicios.
 
 ### 6.1 Ampliación de usabilidad pendiente de reflejar en UML e informe
 
-`ClienteService.listarClientes()` y `ClienteController.listarClientes()` devuelven
-los clientes (reutilizando `ClienteDAO.listar()`) para que la consola y la GUI
+`ClienteService.listarClientes()` devuelve los clientes (reutilizando `ClienteDAO.listar()`) para que la consola y la GUI
 muestren una lista de clientes y nadie tenga que memorizar DNI. Permitido a
 RECEPCIONISTA y ADMINISTRADOR con sesión iniciada, **solo** para elegir clientes
 en sus operaciones autorizadas; no concede al administrador permiso para
@@ -213,8 +203,8 @@ justificar una necesidad concreta.
 
 ## 7. Comunicación de errores
 
-Estrategia única para consola y para la interfaz JavaFX (los controladores
-solo propagan; en la GUI la traduce `gui.Mensajes`):
+Estrategia única para consola y para la interfaz JavaFX (en la GUI la traduce
+`gui.Mensajes`):
 
 - `IllegalArgumentException`: dato inválido o regla de negocio no cumplida
   (DNI duplicado, cliente inexistente, sin membresía vigente, fechas inválidas).
@@ -256,7 +246,7 @@ muestra como «sin resultados», nunca igual que un error de conexión.
   `registrarMembresia` y `renovarMembresia` después de validar. Ninguna clase
   de `app` ni de `gui` puede usar `MembresiaDAO` ni SQL. Hoy ningún caso de
   consola registra membresías; si se agrega uno, debe pasar por
-  `MembresiaController`, mostrar cliente, períodos y fechas antes de guardar, y
+  `MembresiaService`, mostrar cliente, períodos y fechas antes de guardar, y
   no convertir un Registrar rechazado en Renovar.
 - Un ingreso solo se registra si el cliente existe y tiene una membresía
   vigente propia. Se guardan el usuario autenticado y la fecha y hora del
@@ -291,7 +281,7 @@ registrar y consultar tipos; crear usuarios; activar o desactivar usuarios.
 Ambos: listar clientes para elegirlos (6.1).
 
 Los roles no se heredan. La validación de permisos está siempre en los
-servicios, nunca solo en la consola, en los controladores o en la interfaz.
+servicios, nunca solo en la consola o en la interfaz.
 
 ## 11. Base de datos
 
@@ -310,9 +300,9 @@ Tablas: `usuarios`, `clientes`, `tipos_membresia`, `membresias`, `ingresos`.
 ## 12. Casos de consola
 
 La consola es **conceptual** y debe seguir funcionando: muestra cinco casos de
-uso representativos que recorren presentación → controller → service → DAO. La
+uso representativos que recorren presentación → service → DAO. La
 aplicación completa está en la interfaz gráfica (12.1), que usa los mismos
-controladores y servicios.
+servicios.
 
 No hay un menú general. Cada caso es un programa pequeño con
 `public static void main(String[] args)`: inicia sesión, realiza una operación y
@@ -331,7 +321,7 @@ cierra sesión. Los nombres empiezan por el rol que lo ejecuta.
 `Consola` (en `app`) es la única utilidad compartida: lee texto, opciones y
 confirmaciones, y presenta listas numeradas de clientes y membresías. No
 consulta la base ni aplica reglas; las listas las obtiene cada caso por los
-controladores. Usa un único `Scanner` para que la entrada por tubería no se
+servicios. Usa un único `Scanner` para que la entrada por tubería no se
 reparta entre varios lectores.
 
 Reglas para los casos de consola:
@@ -351,27 +341,26 @@ Reglas para los casos de consola:
 - No agregar nuevas clases de consola sin que el equipo lo pida: las demás
   operaciones están en la interfaz gráfica.
 - Los casos de consola y `Consola` son entradas auxiliares: el UML principal los
-  omite y no son entidades, controladores ni servicios. La GUI no depende de
+  omite y no son entidades ni servicios. La GUI no depende de
   ellos.
 
 ### 12.1 Interfaz gráfica (JavaFX + FXML + CSS)
 
-`Main` → `AppGUI` crea **una** `Sesion`, los cuatro servicios y los cuatro
-controladores, y usa una sola escena cuyo contenido se reemplaza al cambiar de
-pantalla. Cada pantalla se carga de nuevo al abrirla, así no quedan datos ni
-resultados anteriores. Cerrar sesión llama a `UsuarioController.cerrarSesion()`
-y vuelve a un login vacío.
+`Main` → `AppGUI` crea **una** `Sesion` y los cuatro servicios, y usa una sola
+escena cuyo contenido se reemplaza al cambiar de pantalla. Cada pantalla se
+carga de nuevo al abrirla, así no quedan datos ni resultados anteriores. Cerrar
+sesión llama a `UsuarioService.cerrarSesion()` y vuelve a un login vacío.
 
-| Vista (FXML) → controlador de eventos | Rol | Operaciones (controlador usado) | Guarda datos |
+| Vista (FXML) → controlador de eventos | Rol | Operaciones (servicio usado) | Guarda datos |
 | --- | --- | --- | --- |
-| `login.fxml` → LoginViewController | — | Iniciar sesión; el rol viene del usuario autenticado (UsuarioController) | Nada |
+| `login.fxml` → LoginViewController | — | Iniciar sesión; el rol viene del usuario autenticado (UsuarioService) | Nada |
 | `principal.fxml` → PrincipalViewController | ambos | Menú lateral solo con las opciones del rol, nombre y rol reales, cerrar sesión | Nada |
-| `ingresos.fxml` → IngresosViewController | RECEPCIONISTA | Buscar por DNI o elegir de la lista, ver membresías y su estado, «Registrar ingreso» con fecha y hora reales (Cliente, Membresia, IngresoController) | 1 ingreso al pulsar el botón, si el servicio lo autoriza |
-| `clientes.fxml` → ClientesViewController | RECEPCIONISTA | Listar, buscar por DNI, registrar y actualizar con un mismo formulario; DNI no editable al actualizar (ClienteController) | Al pulsar Guardar |
-| `membresias.fxml` → MembresiasViewController | RECEPCIONISTA | Elegir cliente, ver períodos y estados, registrar o renovar con tipo existente y fechas elegidas (Cliente, MembresiaController) | Al pulsar Registrar o Renovar |
-| `consultas.fxml` → ConsultasViewController | ADMINISTRADOR | Pestañas: historial de ingresos de un cliente; próximas a vencer en 7 días (Cliente, Membresia, IngresoController) | Nada |
-| `tipos-membresia.fxml` → TiposMembresiaViewController | ADMINISTRADOR | Listar y registrar tipos (nombre, precio) (MembresiaController) | Al pulsar Registrar tipo |
-| `usuarios.fxml` → UsuariosViewController | ADMINISTRADOR | Crear cuenta (rol ADMINISTRADOR o RECEPCIONISTA); activar o desactivar por username, con confirmación al desactivar (UsuarioController) | Al pulsar Crear, Activar o Desactivar |
+| `ingresos.fxml` → IngresosViewController | RECEPCIONISTA | Buscar por DNI o elegir de la lista, ver membresías y su estado, «Registrar ingreso» con fecha y hora reales (Cliente, Membresia, IngresoService) | 1 ingreso al pulsar el botón, si el servicio lo autoriza |
+| `clientes.fxml` → ClientesViewController | RECEPCIONISTA | Listar, buscar por DNI, registrar y actualizar con un mismo formulario; DNI no editable al actualizar (ClienteService) | Al pulsar Guardar |
+| `membresias.fxml` → MembresiasViewController | RECEPCIONISTA | Elegir cliente, ver períodos y estados, registrar o renovar con tipo existente y fechas elegidas (Cliente, MembresiaService) | Al pulsar Registrar o Renovar |
+| `consultas.fxml` → ConsultasViewController | ADMINISTRADOR | Pestañas: historial de ingresos de un cliente; próximas a vencer en 7 días (Cliente, Membresia, IngresoService) | Nada |
+| `tipos-membresia.fxml` → TiposMembresiaViewController | ADMINISTRADOR | Listar y registrar tipos (nombre, precio) (MembresiaService) | Al pulsar Registrar tipo |
+| `usuarios.fxml` → UsuariosViewController | ADMINISTRADOR | Crear cuenta (rol ADMINISTRADOR o RECEPCIONISTA); activar o desactivar por username, con confirmación al desactivar (UsuarioService) | Al pulsar Crear, Activar o Desactivar |
 
 Reglas de la interfaz:
 
@@ -476,7 +465,7 @@ java -cp "target/classes;$env:USERPROFILE\.m2\repository\com\mysql\mysql-connect
 | --- | --- | --- |
 | 0–5 | MER, modelos, scripts, ConexionDB, DAO, Sesion | implementado |
 | 6 | Servicios según UML (reglas y permisos) | implementado, compila |
-| 6b | Controladores según UML (delegan en los servicios) + `listarClientes` | implementado, compila; recorridos de lectura ejecutados contra MySQL |
+| 6b | `listarClientes` (ampliación 6.1); capa `controller` retirada el 2026-10-02 (consola y GUI llaman a los servicios) | implementado, compila; `PruebaSesion`, rechazo de login en consola y arranque de la GUI verificados tras el cambio |
 | 7 | Cinco casos de consola (`Recepcion*`, `Admin*`) y `Consola` | implementado, compila; recorridos sin escritura ejecutados; registrar ingreso, cliente y usuario sin ejecutar contra MySQL |
 | 8 | `Main` + `AppGUI` JavaFX (8 vistas FXML, CSS, paquete `gui`) | implementado, compila; arranque, navegación por rol, cierre de sesión, lecturas y rechazos previos a guardar verificados; acciones que guardan pendientes de probar sobre la base confirmada |
 

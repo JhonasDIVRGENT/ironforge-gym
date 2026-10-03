@@ -1,18 +1,13 @@
 package com.tpoo.upn.app;
 
+import com.tpoo.upn.dao.ConexionDB;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import com.tpoo.upn.dao.ConexionDB;
-
-/**
- * Clase pequeña para comprobar que la conexion a MySQL funciona.
- * abre y cierra conexion 
- */
+// Abre y cierra una conexion para comprobar que MySQL responde.
 public class PruebaConexion {
 
     public static void main(String[] args) {
-        
         try (Connection conexion = ConexionDB.getConexion()) {
             System.out.println("Conexion exitosa a la base de datos ironforge_gym");
         } catch (SQLException e) {

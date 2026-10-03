@@ -9,9 +9,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Acceso a la tabla usuarios.
- */
 public class UsuarioDAO {
 
     public boolean insertar(Usuario usuario) throws SQLException {
@@ -33,7 +30,7 @@ public class UsuarioDAO {
                 return false;
             }
 
-            // MySQL genero el id_usuario con AUTO_INCREMENT: lo guardamos en el mismo objeto.
+            // Se copia al objeto el id que genero MySQL (AUTO_INCREMENT).
             try (ResultSet clavesGeneradas = ps.getGeneratedKeys()) {
                 if (clavesGeneradas.next()) {
                     usuario.setIdUsuario(clavesGeneradas.getInt(1));
@@ -122,7 +119,6 @@ public class UsuarioDAO {
         }
     }
 
-    /** Reconstruye un Usuario con el constructor que recibe el id. */
     private Usuario mapearUsuario(ResultSet rs) throws SQLException {
         return new Usuario(
                 rs.getInt("id_usuario"),

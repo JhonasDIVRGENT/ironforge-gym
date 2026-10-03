@@ -9,9 +9,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Acceso a la tabla tipos_membresia.
- */
 public class TipoMembresiaDAO {
 
     public boolean insertar(TipoMembresia tipo) throws SQLException {
@@ -109,9 +106,7 @@ public class TipoMembresiaDAO {
         }
     }
 
-    /** Reconstruye un TipoMembresia con el constructor que recibe el id. */
     private TipoMembresia mapearTipo(ResultSet rs) throws SQLException {
-        // La columna precio es DECIMAL(10,2); getDouble la entrega como double, que es el tipo del modelo.
         return new TipoMembresia(
                 rs.getInt("id_tipo"),
                 rs.getString("nombre"),

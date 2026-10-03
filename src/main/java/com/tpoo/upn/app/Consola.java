@@ -6,13 +6,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Scanner;
 
-/**
- * Utilidad pequena compartida por los casos de consola.
- * Solo lee lo que se escribe y presenta listas numeradas: no consulta la base de
- * datos ni aplica reglas del gimnasio. Las listas las obtiene cada caso
- * mediante los controladores.
- * Hay un unico Scanner para que dos lectores no se repartan la misma entrada.
- */
+// Lectura de teclado compartida por los casos de consola (un solo Scanner).
 public class Consola {
 
     private static final Scanner ENTRADA = new Scanner(System.in);
@@ -22,13 +16,11 @@ public class Consola {
         return ENTRADA.nextLine().trim();
     }
 
-    /** La contrasena no se recorta: se compara tal como se escribe. */
     public static String leerClave(String etiqueta) {
         System.out.print(etiqueta + " (visible al escribir): ");
         return ENTRADA.nextLine();
     }
 
-    /** Pide un numero entre 0 y maximo; repite la pregunta si se escribe otra cosa. */
     public static int leerOpcion(int maximo) {
         while (true) {
             String texto = leer("Opcion: ");
@@ -38,7 +30,7 @@ public class Consola {
                     return opcion;
                 }
             } catch (NumberFormatException e) {
-                // Se muestra el mismo aviso que para un numero fuera de rango.
+                // Se muestra el mismo aviso de abajo.
             }
             System.out.println("Escriba un numero entre 0 y " + maximo + ".");
         }
@@ -49,7 +41,7 @@ public class Consola {
         return respuesta.equalsIgnoreCase("s");
     }
 
-    /** Muestra los clientes numerados y devuelve el elegido, o null si se cancela. */
+    // Devuelve el cliente elegido o null si se cancela.
     public static Cliente elegirCliente(List<Cliente> clientes) {
         if (clientes.isEmpty()) {
             System.out.println("No hay clientes registrados. Registre uno con RecepcionRegistrarCliente.");
@@ -70,7 +62,6 @@ public class Consola {
         return clientes.get(opcion - 1);
     }
 
-    /** Muestra cada periodo con el estado que calcula Membresia para el dia de hoy. */
     public static void mostrarMembresias(List<Membresia> membresias) {
         if (membresias.isEmpty()) {
             System.out.println("   El cliente no tiene membresias registradas.");
