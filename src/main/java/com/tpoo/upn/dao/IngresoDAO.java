@@ -14,18 +14,10 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Acceso a la tabla ingresos.
- * No tiene actualizar ni eliminar: los ingresos son un historial y no se modifican.
- */
+// Sin actualizar ni eliminar: los ingresos son historial.
 public class IngresoDAO {
 
-    /**
-     * Consulta base con JOIN para traer el ingreso y todos sus objetos relacionados de una vez.
-     * clientes aparece dos veces: c es el cliente del ingreso y cm es el cliente de la membresia.
-     * Normalmente son el mismo, pero eso lo garantiza el controlador, no la base de datos,
-     * por eso cada objeto se arma con sus propios datos y no se reutiliza el otro.
-     */
+    // c = cliente del ingreso, cm = cliente de la membresia.
     private static final String SQL_SELECT =
             "SELECT i.id_ingreso, i.fecha_hora, "
             + "c.id_cliente, c.dni, c.nombres AS cliente_nombres, "
@@ -54,7 +46,6 @@ public class IngresoDAO {
             ps.setInt(1, ingreso.getCliente().getIdCliente());
             ps.setInt(2, ingreso.getMembresia().getIdMembresia());
             ps.setInt(3, ingreso.getUsuario().getIdUsuario());
-            // Se guarda la fechaHora que trae el objeto, no NOW(), para respetar el valor recibido.
             ps.setTimestamp(4, Timestamp.valueOf(ingreso.getFechaHora()));
 
             int filasAfectadas = ps.executeUpdate();
@@ -107,7 +98,6 @@ public class IngresoDAO {
         return ingresos;
     }
 
-    /** Reconstruye el Ingreso y los cuatro objetos relacionados que trajo el JOIN. */
     private Ingreso mapearIngreso(ResultSet rs) throws SQLException {
         Cliente cliente = new Cliente(
                 rs.getInt("id_cliente"),

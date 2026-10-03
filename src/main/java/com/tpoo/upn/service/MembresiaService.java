@@ -12,16 +12,11 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-/**
- * Reglas de negocio de membresias: registrar, renovar, consultar vigencia,
- * proximas a vencer y gestion de tipos de membresia.
- */
 public class MembresiaService {
 
     private static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final MembresiaDAO membresiaDAO = new MembresiaDAO();
-    // ClienteDAO se usa para comprobar que el cliente existe realmente en la base.
     private final ClienteDAO clienteDAO = new ClienteDAO();
     private final TipoMembresiaDAO tipoDAO = new TipoMembresiaDAO();
     private final Sesion sesion;
@@ -33,10 +28,7 @@ public class MembresiaService {
         this.sesion = sesion;
     }
 
-    /**
-     * Registrar es para un cliente sin membresia vigente ni programada.
-     * Si ya tiene una, debe usarse renovar para que los periodos se encadenen.
-     */
+    // Registrar: solo si el cliente no tiene una membresia vigente ni programada.
     public Membresia registrarMembresia(Cliente cliente, TipoMembresia tipo,
             LocalDate inicio, LocalDate fin) throws SQLException {
         exigirRecepcionista();
@@ -52,10 +44,7 @@ public class MembresiaService {
         return guardarMembresia(cliente, tipo, inicio, fin);
     }
 
-    /**
-     * Renovar es insertar un periodo nuevo que empieza despues del ultimo vencimiento:
-     * los periodos se acumulan uno detras de otro y los anteriores se conservan.
-     */
+    // Renovar: agrega un periodo nuevo despues del ultimo vencimiento; los anteriores se conservan.
     public Membresia renovarMembresia(Cliente cliente, TipoMembresia tipo,
             LocalDate inicio, LocalDate fin) throws SQLException {
         exigirRecepcionista();
@@ -70,20 +59,18 @@ public class MembresiaService {
         return guardarMembresia(cliente, tipo, inicio, fin);
     }
 
-    /** Devuelve todas las membresias del cliente; el estado se calcula con Membresia.obtenerEstado. */
     public List<Membresia> consultarVigencia(String dni) throws SQLException {
         exigirRecepcionista();
         if (dni == null || dni.isBlank()) {
             throw new IllegalArgumentException("El DNI es obligatorio");
         }
-        // Se distingue "el cliente no existe" de "el cliente no tiene membresias".
         if (clienteDAO.buscarPorDni(dni) == null) {
             throw new IllegalArgumentException("El cliente no existe");
         }
         return membresiaDAO.listarPorCliente(dni);
     }
 
-    /** RF-11: membresias vigentes hoy que vencen entre hoy y los siguientes siete dias. */
+    // Vigentes hoy que vencen entre hoy y hoy + 7 dias.
     public List<Membresia> listarPorVencer() throws SQLException {
         exigirAdministrador();
         LocalDate hoy = LocalDate.now();
@@ -101,7 +88,7 @@ public class MembresiaService {
         return tipoDAO.insertar(tipo);
     }
 
-    /** Ambos roles pueden consultar los tipos (RF-15). */
+    // Ambos roles pueden consultar los tipos.
     public List<TipoMembresia> listarTipos() throws SQLException {
         if (!sesion.haySesionActiva()) {
             throw new IllegalStateException("Debe iniciar sesion para realizar esta operacion");
@@ -109,11 +96,7 @@ public class MembresiaService {
         return tipoDAO.listar();
     }
 
-    /**
-     * Un cliente no puede tener dos periodos que cubran el mismo dia: el nuevo
-     * periodo debe empezar despues del ultimo vencimiento registrado.
-     * Si falta la fecha de inicio, la rechaza despues el constructor de Membresia.
-     */
+    // Un cliente no puede tener dos periodos que cubran el mismo dia.
     private void validarSinSuperposicion(LocalDate ultimoFin, LocalDate inicio) {
         if (ultimoFin != null && inicio != null && !inicio.isAfter(ultimoFin)) {
             throw new IllegalArgumentException("La membresia debe empezar despues del "
@@ -121,7 +104,6 @@ public class MembresiaService {
         }
     }
 
-    /** Fecha de fin mas lejana entre los periodos del cliente, o null si no tiene ninguno. */
     private LocalDate ultimoVencimiento(List<Membresia> membresias) {
         LocalDate ultimo = null;
         for (Membresia m : membresias) {
@@ -132,17 +114,12 @@ public class MembresiaService {
         return ultimo;
     }
 
-    /** Parte comun de registrar y renovar. */
+    // Parte comun de registrar y renovar: unica insercion de membresias.
     private Membresia guardarMembresia(Cliente cliente, TipoMembresia tipo,
             LocalDate inicio, LocalDate fin) throws SQLException {
-        if (cliente == null) {
-            throw new IllegalArgumentException("El cliente es obligatorio");
-        }
         if (tipo == null) {
             throw new IllegalArgumentException("El tipo de membresia es obligatorio");
         }
-
-        // Un id distinto de cero no demuestra que el registro exista: hay que consultarlo.
         Cliente clienteGuardado = clienteDAO.buscarPorDni(cliente.getDni());
         if (clienteGuardado == null) {
             throw new IllegalArgumentException("El cliente no existe");
@@ -150,15 +127,12 @@ public class MembresiaService {
         if (clienteGuardado.getIdCliente() != cliente.getIdCliente()) {
             throw new IllegalArgumentException("El cliente no corresponde al registro guardado");
         }
-
         TipoMembresia tipoGuardado = tipoDAO.buscarPorId(tipo.getIdTipo());
         if (tipoGuardado == null) {
             throw new IllegalArgumentException("El tipo de membresia no existe");
         }
 
-        // El constructor de Membresia valida que las fechas existan y que fin no sea anterior a inicio.
         Membresia membresia = new Membresia(clienteGuardado, tipoGuardado, inicio, fin);
-        // Se informa el fallo en lugar de devolver una membresia que no quedo guardada.
         if (!membresiaDAO.insertar(membresia)) {
             throw new SQLException("No se pudo guardar la membresia");
         }

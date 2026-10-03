@@ -1,11 +1,11 @@
 package com.tpoo.upn.gui;
 
-import com.tpoo.upn.controller.ClienteController;
-import com.tpoo.upn.controller.IngresoController;
-import com.tpoo.upn.controller.MembresiaController;
 import com.tpoo.upn.model.Cliente;
 import com.tpoo.upn.model.Ingreso;
 import com.tpoo.upn.model.Membresia;
+import com.tpoo.upn.service.ClienteService;
+import com.tpoo.upn.service.IngresoService;
+import com.tpoo.upn.service.MembresiaService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -14,11 +14,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 
-/**
- * Eventos de ConsultasView.fxml (RF-09 y RF-11), solo para el administrador.
- * Una lista vacia se muestra como "sin resultados"; un fallo de la base se
- * muestra aparte como error, para no confundirlos.
- */
 public class ConsultasViewController {
 
     @FXML private ComboBox<Cliente> cmbClientes;
@@ -39,13 +34,13 @@ public class ConsultasViewController {
     @FXML private TableColumn<Membresia, String> colVence;
     @FXML private Label lblSinPorVencer;
 
-    private MembresiaController membresiaController;
-    private IngresoController ingresoController;
+    private MembresiaService membresiaService;
+    private IngresoService ingresoService;
 
-    public void inicializar(ClienteController clienteController, MembresiaController membresiaController,
-            IngresoController ingresoController) {
-        this.membresiaController = membresiaController;
-        this.ingresoController = ingresoController;
+    public void inicializar(ClienteService clienteService, MembresiaService membresiaService,
+            IngresoService ingresoService) {
+        this.membresiaService = membresiaService;
+        this.ingresoService = ingresoService;
 
         colFechaHora.setCellValueFactory(d -> new SimpleStringProperty(Formato.fechaHora(d.getValue().getFechaHora())));
         colRegistradoPor.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getUsuario().getUsername()));
@@ -56,13 +51,11 @@ public class ConsultasViewController {
         colVence.setCellValueFactory(d -> new SimpleStringProperty(Formato.fecha(d.getValue().getFechaFin())));
         cmbClientes.setConverter(Formato.convertidorCliente());
 
-        // Solo lecturas: la lista de clientes para elegir y las proximas a vencer.
-        Tarea.ejecutar(clienteController::listarClientes,
+        Tarea.ejecutar(clienteService::listarClientes,
                 clientes -> cmbClientes.getItems().setAll(clientes), lblMensajeHistorial);
         consultarPorVencer();
     }
 
-    /** RF-09: historial de ingresos del cliente elegido, del mas reciente al mas antiguo. */
     @FXML
     private void consultarHistorial() {
         Cliente cliente = cmbClientes.getValue();
@@ -73,19 +66,18 @@ public class ConsultasViewController {
         tblHistorial.getItems().clear();
         lblResumenHistorial.setText("");
         lblSinHistorial.setText("");
-        Tarea.ejecutar(() -> ingresoController.consultarHistorial(cliente.getDni()), ingresos -> {
+        Tarea.ejecutar(() -> ingresoService.consultarHistorial(cliente.getDni()), ingresos -> {
             tblHistorial.getItems().setAll(ingresos);
             lblResumenHistorial.setText(Formato.cliente(cliente).toUpperCase() + " · " + ingresos.size() + " INGRESOS");
             lblSinHistorial.setText("No existen ingresos registrados para este cliente.");
         }, lblMensajeHistorial, btnHistorial);
     }
 
-    /** RF-11: membresias vigentes que vencen entre hoy y los proximos siete dias. */
     @FXML
     private void consultarPorVencer() {
         tblPorVencer.getItems().clear();
         lblSinPorVencer.setText("");
-        Tarea.ejecutar(membresiaController::listarPorVencer, membresias -> {
+        Tarea.ejecutar(membresiaService::listarPorVencer, membresias -> {
             tblPorVencer.getItems().setAll(membresias);
             lblSinPorVencer.setText("No hay membresías vigentes que venzan en los próximos 7 días.");
         }, lblMensajeVencer, btnActualizar);

@@ -1,9 +1,5 @@
 package com.tpoo.upn.app;
 
-import com.tpoo.upn.controller.ClienteController;
-import com.tpoo.upn.controller.IngresoController;
-import com.tpoo.upn.controller.MembresiaController;
-import com.tpoo.upn.controller.UsuarioController;
 import com.tpoo.upn.model.Cliente;
 import com.tpoo.upn.model.Ingreso;
 import com.tpoo.upn.model.Membresia;
@@ -16,27 +12,22 @@ import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-/**
- * Caso: el administrador consulta las membresias proximas a vencer (RF-11)
- * o el historial de ingresos de un cliente (RF-09).
- * Necesita una cuenta ADMINISTRADOR activa. Solo lee datos.
- */
+// Administrador: membresias proximas a vencer o historial de ingresos. Solo lee datos.
 public class AdminConsultas {
 
-    private static final DateTimeFormatter FORMATO_FECHA_HORA =
-            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+    private static final DateTimeFormatter FORMATO_FECHA_HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
     public static void main(String[] args) {
         Sesion sesion = new Sesion();
-        UsuarioController usuarioController = new UsuarioController(new UsuarioService(sesion));
-        ClienteController clienteController = new ClienteController(new ClienteService(sesion));
-        MembresiaController membresiaController = new MembresiaController(new MembresiaService(sesion));
-        IngresoController ingresoController = new IngresoController(new IngresoService(sesion));
+        UsuarioService usuarioService = new UsuarioService(sesion);
+        ClienteService clienteService = new ClienteService(sesion);
+        MembresiaService membresiaService = new MembresiaService(sesion);
+        IngresoService ingresoService = new IngresoService(sesion);
 
         System.out.println("=== IronForge Gym - Consultas del administrador ===");
 
         try {
-            usuarioController.iniciarSesion(Consola.leer("Username del administrador: "),
+            usuarioService.iniciarSesion(Consola.leer("Username del administrador: "),
                     Consola.leerClave("Contrasena"));
             System.out.println();
 
@@ -45,8 +36,8 @@ public class AdminConsultas {
             System.out.println("0. Salir");
 
             switch (Consola.leerOpcion(2)) {
-                case 1 -> mostrarPorVencer(membresiaController);
-                case 2 -> mostrarHistorial(clienteController, ingresoController);
+                case 1 -> mostrarPorVencer(membresiaService);
+                case 2 -> mostrarHistorial(clienteService, ingresoService);
                 default -> System.out.println("Sin consultas.");
             }
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -54,13 +45,13 @@ public class AdminConsultas {
         } catch (SQLException e) {
             System.out.println("Error de base de datos. Compruebe que MySQL este activo.");
         } finally {
-            usuarioController.cerrarSesion();
+            usuarioService.cerrarSesion();
             System.out.println("Sesion cerrada.");
         }
     }
 
-    private static void mostrarPorVencer(MembresiaController membresiaController) throws SQLException {
-        List<Membresia> porVencer = membresiaController.listarPorVencer();
+    private static void mostrarPorVencer(MembresiaService membresiaService) throws SQLException {
+        List<Membresia> porVencer = membresiaService.listarPorVencer();
         System.out.println("Membresias vigentes que vencen en los proximos 7 dias:");
         if (porVencer.isEmpty()) {
             System.out.println("   No existen membresias proximas a vencer.");
@@ -71,13 +62,13 @@ public class AdminConsultas {
         }
     }
 
-    private static void mostrarHistorial(ClienteController clienteController,
-            IngresoController ingresoController) throws SQLException {
-        Cliente cliente = Consola.elegirCliente(clienteController.listarClientes());
+    private static void mostrarHistorial(ClienteService clienteService, IngresoService ingresoService)
+            throws SQLException {
+        Cliente cliente = Consola.elegirCliente(clienteService.listarClientes());
         if (cliente == null) {
             return;
         }
-        List<Ingreso> historial = ingresoController.consultarHistorial(cliente.getDni());
+        List<Ingreso> historial = ingresoService.consultarHistorial(cliente.getDni());
         System.out.println("Historial de " + cliente.getNombreCompleto() + " (" + historial.size() + " ingresos):");
         if (historial.isEmpty()) {
             System.out.println("   No existen ingresos registrados para este cliente.");

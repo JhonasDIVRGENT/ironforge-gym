@@ -9,9 +9,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Acceso a la tabla clientes.
- */
 public class ClienteDAO {
 
     public boolean insertar(Cliente cliente) throws SQLException {
@@ -23,7 +20,6 @@ public class ClienteDAO {
             ps.setString(1, cliente.getDni());
             ps.setString(2, cliente.getNombres());
             ps.setString(3, cliente.getApellidos());
-            // setString acepta null y guarda NULL, que es lo que corresponde al telefono opcional.
             ps.setString(4, cliente.getTelefono());
 
             int filasAfectadas = ps.executeUpdate();
@@ -117,7 +113,6 @@ public class ClienteDAO {
         }
     }
 
-    /** Reconstruye un Cliente con el constructor que recibe el id. */
     private Cliente mapearCliente(ResultSet rs) throws SQLException {
         return new Cliente(
                 rs.getInt("id_cliente"),

@@ -1,7 +1,7 @@
 package com.tpoo.upn.gui;
 
-import com.tpoo.upn.controller.ClienteController;
 import com.tpoo.upn.model.Cliente;
+import com.tpoo.upn.service.ClienteService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -10,11 +10,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 
-/**
- * Eventos de ClientesView.fxml (RF-01, RF-02, RF-03).
- * Un mismo formulario sirve para registrar (clienteEditado == null) y para
- * editar. Al editar, el DNI no se cambia porque identifica al cliente.
- */
+// Un mismo formulario registra (clienteEditado == null) o edita. Al editar, el DNI no cambia.
 public class ClientesViewController {
 
     @FXML private TextField txtBuscarDni;
@@ -36,12 +32,11 @@ public class ClientesViewController {
     @FXML private TextField txtTelefono;
     @FXML private Button btnGuardar;
 
-    private ClienteController clienteController;
-    /** Cliente que se esta editando; null cuando el formulario registra uno nuevo. */
+    private ClienteService clienteService;
     private Cliente clienteEditado;
 
-    public void inicializar(ClienteController clienteController) {
-        this.clienteController = clienteController;
+    public void inicializar(ClienteService clienteService) {
+        this.clienteService = clienteService;
 
         colNombre.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getNombreCompleto()));
         colDni.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getDni()));
@@ -59,10 +54,9 @@ public class ClientesViewController {
     @FXML
     private void buscar() {
         String dni = txtBuscarDni.getText().trim();
-        Tarea.ejecutar(() -> clienteController.buscarCliente(dni), cliente -> {
+        Tarea.ejecutar(() -> clienteService.buscarCliente(dni), cliente -> {
             tblClientes.getSelectionModel().clearSelection();
             if (cliente == null) {
-                // RF-02: se indica que no existe y se deja el DNI listo para registrarlo.
                 prepararNuevo();
                 txtDni.setText(dni);
                 Mensajes.info(lblMensajeBusqueda, "No existe un cliente registrado con el DNI " + dni
@@ -85,7 +79,6 @@ public class ClientesViewController {
         String telefono = txtTelefono.getText().trim();
         Cliente datos;
         try {
-            // El constructor de Cliente valida DNI, nombres y apellidos antes de llamar al servicio.
             if (clienteEditado == null) {
                 datos = new Cliente(txtDni.getText().trim(), txtNombres.getText().trim(),
                         txtApellidos.getText().trim(), telefono.isEmpty() ? null : telefono);
@@ -100,8 +93,8 @@ public class ClientesViewController {
         }
 
         boolean esNuevo = clienteEditado == null;
-        Tarea.ejecutar(() -> esNuevo ? clienteController.registrarCliente(datos)
-                                     : clienteController.actualizarCliente(datos), guardado -> {
+        Tarea.ejecutar(() -> esNuevo ? clienteService.registrarCliente(datos)
+                                     : clienteService.actualizarCliente(datos), guardado -> {
             if (!guardado) {
                 Mensajes.error(lblMensaje, "No se guardaron los datos. Intente de nuevo.");
                 return;
@@ -119,7 +112,7 @@ public class ClientesViewController {
 
     private void cargarClientes() {
         lblSinClientes.setText("");
-        Tarea.ejecutar(clienteController::listarClientes, clientes -> {
+        Tarea.ejecutar(clienteService::listarClientes, clientes -> {
             tblClientes.getItems().setAll(clientes);
             lblTotal.setText(clientes.size() + " registrados");
             lblSinClientes.setText("Todavía no hay clientes registrados.");

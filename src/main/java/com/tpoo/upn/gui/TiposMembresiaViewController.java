@@ -1,7 +1,7 @@
 package com.tpoo.upn.gui;
 
-import com.tpoo.upn.controller.MembresiaController;
 import com.tpoo.upn.model.TipoMembresia;
+import com.tpoo.upn.service.MembresiaService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -10,10 +10,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 
-/**
- * Eventos de TiposMembresiaView.fxml (RF-15): registrar y consultar tipos.
- * Sin edicion ni eliminacion, porque el informe no las contempla.
- */
 public class TiposMembresiaViewController {
 
     @FXML private TableView<TipoMembresia> tblTipos;
@@ -27,10 +23,10 @@ public class TiposMembresiaViewController {
     @FXML private TextField txtPrecio;
     @FXML private Button btnRegistrar;
 
-    private MembresiaController membresiaController;
+    private MembresiaService membresiaService;
 
-    public void inicializar(MembresiaController membresiaController) {
-        this.membresiaController = membresiaController;
+    public void inicializar(MembresiaService membresiaService) {
+        this.membresiaService = membresiaService;
         colNombre.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getNombre()));
         colPrecio.setCellValueFactory(d -> new SimpleStringProperty(Formato.precio(d.getValue().getPrecio())));
         cargarTipos();
@@ -40,7 +36,6 @@ public class TiposMembresiaViewController {
     private void registrar() {
         TipoMembresia tipo;
         try {
-            // Se acepta coma o punto decimal; el modelo valida nombre y precio.
             double precio = Double.parseDouble(txtPrecio.getText().trim().replace(',', '.'));
             tipo = new TipoMembresia(txtNombre.getText().trim(), precio);
         } catch (NumberFormatException e) {
@@ -51,7 +46,7 @@ public class TiposMembresiaViewController {
             return;
         }
 
-        Tarea.ejecutar(() -> membresiaController.registrarTipo(tipo), guardado -> {
+        Tarea.ejecutar(() -> membresiaService.registrarTipo(tipo), guardado -> {
             if (!guardado) {
                 Mensajes.error(lblMensaje, "No se guardó el tipo. Intente de nuevo.");
                 return;
@@ -65,7 +60,7 @@ public class TiposMembresiaViewController {
 
     private void cargarTipos() {
         lblSinTipos.setText("");
-        Tarea.ejecutar(membresiaController::listarTipos, tipos -> {
+        Tarea.ejecutar(membresiaService::listarTipos, tipos -> {
             tblTipos.getItems().setAll(tipos);
             lblTotal.setText(tipos.size() + " registrados");
             lblSinTipos.setText("Todavía no hay tipos de membresía registrados.");

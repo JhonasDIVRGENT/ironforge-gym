@@ -7,10 +7,11 @@ archivo agrega únicamente indicaciones para Claude Code.
 Antes de crear, modificar o eliminar código:
 
 1. Leer AGENTS.md completo.
-2. Respetar su arquitectura: paquetes `model`, `controller`, `service`, `dao`
-   (incluye ConexionDB), `session`, `app` y `gui`; flujo presentación (consola
-   o vista FXML + `gui`) → controller → service → DAO, con reglas y permisos en
-   service. Los controladores y servicios existentes se conservan.
+2. Respetar su arquitectura: paquetes `model`, `service`, `dao` (incluye
+   ConexionDB), `session`, `app` y `gui`; flujo presentación (consola o vista
+   FXML + `XxxViewController` de `gui`) → service → DAO, con reglas y permisos
+   en service. No hay capa `controller` (retirada por decisión del equipo,
+   2026-10-02); no volver a crearla.
 3. No crear paquetes, frameworks o clases adicionales sin autorización, ni
    funcionalidades fuera del informe (AGENTS.md, secciones 2 y 12.1).
 4. Mantener compatibilidad con Java 21, JavaFX 21 y Maven; proyecto no modular.

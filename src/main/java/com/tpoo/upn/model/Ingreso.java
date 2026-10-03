@@ -2,11 +2,6 @@ package com.tpoo.upn.model;
 
 import java.time.LocalDateTime;
 
-/**
- * Registro del ingreso de un cliente al gimnasio.
- * Conoce al cliente, la membresia que autorizo el acceso
- * y el usuario del personal que registro el ingreso.
- */
 public class Ingreso {
 
     private int idIngreso;
@@ -15,12 +10,7 @@ public class Ingreso {
     private Usuario usuario;
     private LocalDateTime fechaHora;
 
-    /**
-     * Constructor usado antes de insertar el ingreso en la base de datos.
-     * Solo crea el objeto en memoria: no guarda nada en MySQL.
-     * El idIngreso queda en 0 porque MySQL todavia no le asigno un id.
-     * Recibe la fechaHora, lo que permite reconstruir tambien ingresos historicos.
-     */
+    // Ingreso nuevo, aun sin id.
     public Ingreso(Cliente cliente, Membresia membresia, Usuario usuario, LocalDateTime fechaHora) {
         setCliente(cliente);
         setMembresia(membresia);
@@ -28,10 +18,7 @@ public class Ingreso {
         setFechaHora(fechaHora);
     }
 
-    /**
-     * Constructor usado al recuperar el ingreso desde la base de datos.
-     * Tampoco consulta MySQL: solo recibe los datos que el DAO ya leyo.
-     */
+    // Ingreso leido de la base de datos.
     public Ingreso(int idIngreso, Cliente cliente, Membresia membresia, Usuario usuario,
             LocalDateTime fechaHora) {
         this(cliente, membresia, usuario, fechaHora);
@@ -43,7 +30,6 @@ public class Ingreso {
     }
 
     public void setIdIngreso(int idIngreso) {
-        // 0 significa "aun sin id en la base de datos"; un id negativo no existe.
         if (idIngreso < 0) {
             throw new IllegalArgumentException("El id del ingreso no puede ser negativo");
         }

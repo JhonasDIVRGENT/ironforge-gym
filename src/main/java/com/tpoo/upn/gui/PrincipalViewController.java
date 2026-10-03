@@ -1,11 +1,11 @@
 package com.tpoo.upn.gui;
 
 import com.tpoo.upn.app.AppGUI;
-import com.tpoo.upn.controller.ClienteController;
-import com.tpoo.upn.controller.IngresoController;
-import com.tpoo.upn.controller.MembresiaController;
-import com.tpoo.upn.controller.UsuarioController;
 import com.tpoo.upn.model.Usuario;
+import com.tpoo.upn.service.ClienteService;
+import com.tpoo.upn.service.IngresoService;
+import com.tpoo.upn.service.MembresiaService;
+import com.tpoo.upn.service.UsuarioService;
 import java.time.LocalDate;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -15,11 +15,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 
-/**
- * Eventos de PrincipalView.fxml: menu lateral segun el rol, datos del usuario
- * autenticado y cierre de sesion. Cada opcion carga su vista y le entrega solo
- * los controladores que necesita.
- */
 public class PrincipalViewController {
 
     @FXML private VBox menuRecepcion;
@@ -37,26 +32,25 @@ public class PrincipalViewController {
 
     private AppGUI app;
     private Usuario usuario;
-    private UsuarioController usuarioController;
-    private ClienteController clienteController;
-    private MembresiaController membresiaController;
-    private IngresoController ingresoController;
+    private UsuarioService usuarioService;
+    private ClienteService clienteService;
+    private MembresiaService membresiaService;
+    private IngresoService ingresoService;
 
-    public void inicializar(AppGUI app, Usuario usuario, UsuarioController usuarioController,
-            ClienteController clienteController, MembresiaController membresiaController,
-            IngresoController ingresoController) {
+    public void inicializar(AppGUI app, Usuario usuario, UsuarioService usuarioService,
+            ClienteService clienteService, MembresiaService membresiaService, IngresoService ingresoService) {
         this.app = app;
         this.usuario = usuario;
-        this.usuarioController = usuarioController;
-        this.clienteController = clienteController;
-        this.membresiaController = membresiaController;
-        this.ingresoController = ingresoController;
+        this.usuarioService = usuarioService;
+        this.clienteService = clienteService;
+        this.membresiaService = membresiaService;
+        this.ingresoService = ingresoService;
 
         lblUsuarioNombre.setText(usuario.getNombreCompleto());
         lblUsuarioRol.setText(usuario.getRol());
         lblFecha.setText(Formato.fecha(LocalDate.now()));
 
-        // Se ocultan las opciones de otro rol. Los servicios siguen comprobando los permisos.
+        // Ocultar el menu de otro rol es solo comodidad: el permiso lo comprueba el servicio.
         mostrarMenu(menuRecepcion, usuario.esRecepcionista());
         mostrarMenu(menuAdministracion, usuario.esAdministrador());
 
@@ -71,7 +65,7 @@ public class PrincipalViewController {
     private void mostrarIngresos() {
         FXMLLoader cargador = AppGUI.cargarVista("ingresos");
         IngresosViewController vista = cargador.getController();
-        vista.inicializar(clienteController, membresiaController, ingresoController);
+        vista.inicializar(clienteService, membresiaService, ingresoService);
         cambiarContenido(cargador.getRoot(), btnIngresos);
     }
 
@@ -79,7 +73,7 @@ public class PrincipalViewController {
     private void mostrarClientes() {
         FXMLLoader cargador = AppGUI.cargarVista("clientes");
         ClientesViewController vista = cargador.getController();
-        vista.inicializar(clienteController);
+        vista.inicializar(clienteService);
         cambiarContenido(cargador.getRoot(), btnClientes);
     }
 
@@ -87,7 +81,7 @@ public class PrincipalViewController {
     private void mostrarMembresias() {
         FXMLLoader cargador = AppGUI.cargarVista("membresias");
         MembresiasViewController vista = cargador.getController();
-        vista.inicializar(clienteController, membresiaController);
+        vista.inicializar(clienteService, membresiaService);
         cambiarContenido(cargador.getRoot(), btnMembresias);
     }
 
@@ -95,7 +89,7 @@ public class PrincipalViewController {
     private void mostrarConsultas() {
         FXMLLoader cargador = AppGUI.cargarVista("consultas");
         ConsultasViewController vista = cargador.getController();
-        vista.inicializar(clienteController, membresiaController, ingresoController);
+        vista.inicializar(clienteService, membresiaService, ingresoService);
         cambiarContenido(cargador.getRoot(), btnConsultas);
     }
 
@@ -103,7 +97,7 @@ public class PrincipalViewController {
     private void mostrarTipos() {
         FXMLLoader cargador = AppGUI.cargarVista("tipos-membresia");
         TiposMembresiaViewController vista = cargador.getController();
-        vista.inicializar(membresiaController);
+        vista.inicializar(membresiaService);
         cambiarContenido(cargador.getRoot(), btnTipos);
     }
 
@@ -111,21 +105,16 @@ public class PrincipalViewController {
     private void mostrarUsuarios() {
         FXMLLoader cargador = AppGUI.cargarVista("usuarios");
         UsuariosViewController vista = cargador.getController();
-        vista.inicializar(usuarioController, usuario);
+        vista.inicializar(usuarioService, usuario);
         cambiarContenido(cargador.getRoot(), btnUsuarios);
     }
 
-    /** Cierra la sesion mediante UsuarioController y vuelve a un login vacio. */
     @FXML
     private void cerrarSesion() {
-        usuarioController.cerrarSesion();
+        usuarioService.cerrarSesion();
         app.mostrarLogin();
     }
 
-    /**
-     * Cada vez se carga una vista nueva, asi no quedan datos ni resultados
-     * de la pantalla anterior.
-     */
     private void cambiarContenido(Parent vista, Button botonActivo) {
         scrollContenido.setContent(vista);
         scrollContenido.setVvalue(0);

@@ -1,10 +1,10 @@
 package com.tpoo.upn.gui;
 
-import com.tpoo.upn.controller.ClienteController;
-import com.tpoo.upn.controller.MembresiaController;
 import com.tpoo.upn.model.Cliente;
 import com.tpoo.upn.model.Membresia;
 import com.tpoo.upn.model.TipoMembresia;
+import com.tpoo.upn.service.ClienteService;
+import com.tpoo.upn.service.MembresiaService;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,11 +19,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 
-/**
- * Eventos de MembresiasView.fxml (RF-04, RF-05, RF-12, RF-15).
- * Las fechas las elige el recepcionista; las valida el modelo y el servicio
- * (fin no anterior a inicio, cliente y tipo existentes, membresia previa al renovar).
- */
+// Las fechas las elige el recepcionista; las reglas (sin superposicion, etc.) las valida MembresiaService.
 public class MembresiasViewController {
 
     @FXML private TextField txtDni;
@@ -46,15 +42,14 @@ public class MembresiasViewController {
     @FXML private Button btnRegistrar;
     @FXML private Button btnRenovar;
 
-    private ClienteController clienteController;
-    private MembresiaController membresiaController;
+    private ClienteService clienteService;
+    private MembresiaService membresiaService;
     private Cliente clienteActual;
-    /** Todos los periodos del cliente; la tabla muestra solo los que pasan el filtro. */
     private List<Membresia> membresiasCliente = new ArrayList<>();
 
-    public void inicializar(ClienteController clienteController, MembresiaController membresiaController) {
-        this.clienteController = clienteController;
-        this.membresiaController = membresiaController;
+    public void inicializar(ClienteService clienteService, MembresiaService membresiaService) {
+        this.clienteService = clienteService;
+        this.membresiaService = membresiaService;
 
         colTipo.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getTipo().getNombre()));
         colInicio.setCellValueFactory(d -> new SimpleStringProperty(Formato.fecha(d.getValue().getFechaInicio())));
@@ -66,9 +61,9 @@ public class MembresiasViewController {
         dpInicio.setConverter(Formato.convertidorFecha());
         dpFin.setConverter(Formato.convertidorFecha());
 
-        Tarea.ejecutar(clienteController::listarClientes,
+        Tarea.ejecutar(clienteService::listarClientes,
                 clientes -> cmbClientes.getItems().setAll(clientes), lblMensajeCliente);
-        Tarea.ejecutar(membresiaController::listarTipos, tipos -> {
+        Tarea.ejecutar(membresiaService::listarTipos, tipos -> {
             cmbTipos.getItems().setAll(tipos);
             if (tipos.isEmpty()) {
                 Mensajes.info(lblMensaje, "No hay tipos de membresía. Un administrador debe registrarlos primero.");
@@ -80,7 +75,7 @@ public class MembresiasViewController {
     private void buscarPorDni() {
         String dni = txtDni.getText().trim();
         cmbClientes.getSelectionModel().clearSelection();
-        Tarea.ejecutar(() -> clienteController.buscarCliente(dni), cliente -> {
+        Tarea.ejecutar(() -> clienteService.buscarCliente(dni), cliente -> {
             if (cliente == null) {
                 quitarCliente();
                 Mensajes.info(lblMensajeCliente, "No existe un cliente registrado con el DNI " + dni + ".");
@@ -120,15 +115,14 @@ public class MembresiasViewController {
         LocalDate inicio = dpInicio.getValue();
         LocalDate fin = dpFin.getValue();
 
-        // Con los datos completos, se muestra lo que se va a guardar y se pide confirmacion.
-        // Si falta algo, el servicio o el modelo lo rechazan con su motivo.
+        // Si falta algun dato no se pregunta: el servicio lo rechaza con su motivo.
         if (tipo != null && inicio != null && fin != null && !confirmarFechas(cliente, tipo, inicio, fin, esRenovacion)) {
             return;
         }
 
         Tarea.ejecutar(() -> esRenovacion
-                ? membresiaController.renovarMembresia(cliente, tipo, inicio, fin)
-                : membresiaController.registrarMembresia(cliente, tipo, inicio, fin), membresia -> {
+                ? membresiaService.renovarMembresia(cliente, tipo, inicio, fin)
+                : membresiaService.registrarMembresia(cliente, tipo, inicio, fin), membresia -> {
             Mensajes.exito(lblMensaje, (esRenovacion ? "Membresía renovada: " : "Membresía registrada: ")
                     + membresia.getTipo().getNombre() + " del " + Formato.fecha(membresia.getFechaInicio())
                     + " al " + Formato.fecha(membresia.getFechaFin()) + ".");
@@ -139,7 +133,6 @@ public class MembresiasViewController {
         }, lblMensaje, btnRegistrar, btnRenovar);
     }
 
-    /** Muestra cliente, periodos existentes y fechas propuestas antes de guardar. */
     private boolean confirmarFechas(Cliente cliente, TipoMembresia tipo, LocalDate inicio, LocalDate fin,
             boolean esRenovacion) {
         String periodos = membresiasCliente.isEmpty()
@@ -168,22 +161,17 @@ public class MembresiasViewController {
         lblResumen.setText("");
         chkHistorial.setSelected(false);
         mostrarCasillaHistorial(false);
-        Tarea.ejecutar(() -> membresiaController.consultarVigencia(cliente.getDni()), membresias -> {
-            if (cliente != clienteActual) {
-                return; // Mientras tanto se eligio otro cliente.
+        Tarea.ejecutar(() -> membresiaService.consultarVigencia(cliente.getDni()), membresias -> {
+            if (cliente == clienteActual) {
+                membresiasCliente = membresias;
+                aplicarFiltro();
+                lblResumen.setText(Formato.resumenMembresias(membresias));
+                sugerirInicio(Formato.ultimoVencimiento(membresias));
             }
-            membresiasCliente = membresias;
-            aplicarFiltro();
-            lblResumen.setText(Formato.resumenMembresias(membresias));
-            sugerirInicio(Formato.ultimoVencimiento(membresias));
         }, lblMensajeCliente);
     }
 
-    /**
-     * Solo una sugerencia que el recepcionista puede cambiar: el dia siguiente al
-     * ultimo vencimiento, o hoy si no tiene periodos pendientes. La regla de no
-     * cruzar periodos la comprueba MembresiaService.
-     */
+    // Sugerencia: el dia siguiente al ultimo vencimiento, o hoy si no tiene periodos pendientes.
     private void sugerirInicio(LocalDate ultimoVencimiento) {
         LocalDate hoy = LocalDate.now();
         if (ultimoVencimiento == null || ultimoVencimiento.isBefore(hoy)) {
@@ -198,10 +186,7 @@ public class MembresiasViewController {
         aplicarFiltro();
     }
 
-    /**
-     * Por defecto se ven solo los periodos vigentes y programados, para no
-     * confundir; las vencidas se ven al marcar "Mostrar historial".
-     */
+    // Por defecto solo se ven las vigentes y programadas; las vencidas, con "Mostrar historial".
     private void aplicarFiltro() {
         int vencidas = Formato.contarVencidas(membresiasCliente);
         chkHistorial.setText(Formato.textoHistorial(vencidas));

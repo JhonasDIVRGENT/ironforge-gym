@@ -3,10 +3,7 @@ package com.tpoo.upn.app;
 import com.tpoo.upn.model.Usuario;
 import com.tpoo.upn.session.Sesion;
 
-/**
- * Comprueba el comportamiento de Sesion con usuarios de ejemplo en memoria.
- * No usa MySQL ni toca registros reales.
- */
+// Prueba Sesion en memoria, sin MySQL.
 public class PruebaSesion {
 
     public static void main(String[] args) {

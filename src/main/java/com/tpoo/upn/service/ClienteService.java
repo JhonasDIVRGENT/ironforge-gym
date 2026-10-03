@@ -1,16 +1,11 @@
 package com.tpoo.upn.service;
 
-import java.sql.SQLException;
-import java.util.List;
-
 import com.tpoo.upn.dao.ClienteDAO;
 import com.tpoo.upn.model.Cliente;
 import com.tpoo.upn.session.Sesion;
+import java.sql.SQLException;
+import java.util.List;
 
-/**
- * Reglas de negocio de clientes: registrar, buscar y actualizar.
-
- */
 public class ClienteService {
 
     private final ClienteDAO clienteDAO = new ClienteDAO();
@@ -34,7 +29,7 @@ public class ClienteService {
         return clienteDAO.insertar(cliente);
     }
 
-    /** Devuelve null cuando el DNI no corresponde a ningun cliente. */
+    // Devuelve null si el DNI no existe.
     public Cliente buscarCliente(String dni) throws SQLException {
         exigirRecepcionista();
         if (dni == null || dni.isBlank()) {
@@ -43,17 +38,12 @@ public class ClienteService {
         return clienteDAO.buscarPorDni(dni);
     }
 
-    /**
-     * Actualiza nombres, apellidos y telefono del cliente.
-     * El DNI y el id identifican el registro, por eso no se cambian aqui.
-     * Las membresias e ingresos se conservan porque apuntan al mismo id_cliente.
-     */
+    // Cambia nombres, apellidos y telefono; el DNI y el id no cambian, asi se conservan membresias e ingresos.
     public boolean actualizarCliente(Cliente cliente) throws SQLException {
         exigirRecepcionista();
         if (cliente == null) {
             throw new IllegalArgumentException("El cliente es obligatorio");
         }
-
         Cliente guardado = clienteDAO.buscarPorDni(cliente.getDni());
         if (guardado == null) {
             throw new IllegalArgumentException("El cliente no existe");
@@ -61,22 +51,13 @@ public class ClienteService {
         if (guardado.getIdCliente() != cliente.getIdCliente()) {
             throw new IllegalArgumentException("El cliente no corresponde al registro guardado");
         }
-
         return clienteDAO.actualizar(cliente);
     }
 
-    /**
-     * Ampliacion de usabilidad (aun no reflejada en el UML ni en el informe):
-     * permite elegir un cliente de una lista en lugar de escribir su DNI.
-     * La pueden usar ambos roles; no da permiso al administrador para registrar
-     * ni modificar clientes.
-     */
+    // Ambos roles pueden listar clientes para elegirlos.
     public List<Cliente> listarClientes() throws SQLException {
         if (!sesion.haySesionActiva()) {
             throw new IllegalStateException("Debe iniciar sesion para realizar esta operacion");
-        }
-        if (!sesion.esRecepcionista() && !sesion.esAdministrador()) {
-            throw new IllegalStateException("No tiene permiso para consultar la lista de clientes");
         }
         return clienteDAO.listar();
     }

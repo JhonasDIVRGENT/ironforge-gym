@@ -1,26 +1,21 @@
 package com.tpoo.upn.app;
 
-import com.tpoo.upn.controller.UsuarioController;
 import com.tpoo.upn.model.Usuario;
 import com.tpoo.upn.service.UsuarioService;
 import com.tpoo.upn.session.Sesion;
 import java.sql.SQLException;
 
-/**
- * Caso: el administrador crea una cuenta nueva del personal (RF-13).
- * Necesita una cuenta ADMINISTRADOR activa y un username que todavia no exista.
- * Guarda una cuenta nueva, que queda activa.
- */
+// Administrador: crea una cuenta nueva (queda activa). Guarda 1 cuenta.
 public class AdminCrearUsuario {
 
     public static void main(String[] args) {
         Sesion sesion = new Sesion();
-        UsuarioController usuarioController = new UsuarioController(new UsuarioService(sesion));
+        UsuarioService usuarioService = new UsuarioService(sesion);
 
         System.out.println("=== IronForge Gym - Crear usuario ===");
 
         try {
-            usuarioController.iniciarSesion(Consola.leer("Username del administrador: "),
+            usuarioService.iniciarSesion(Consola.leer("Username del administrador: "),
                     Consola.leerClave("Contrasena"));
             System.out.println();
 
@@ -40,9 +35,8 @@ public class AdminCrearUsuario {
             }
             String rol = opcion == 1 ? Usuario.ROL_RECEPCIONISTA : Usuario.ROL_ADMINISTRADOR;
 
-            // El constructor de Usuario valida los datos; el servicio comprueba permiso y username unico.
             Usuario nuevo = new Usuario(nombres, apellidos, username, clave, rol);
-            usuarioController.crearUsuario(nuevo);
+            usuarioService.crearUsuario(nuevo);
             System.out.println("CUENTA CREADA: " + nuevo.getUsername() + " (" + nuevo.getNombreCompleto()
                     + ") como " + nuevo.getRol() + ", activa: " + nuevo.isActivo());
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -50,7 +44,7 @@ public class AdminCrearUsuario {
         } catch (SQLException e) {
             System.out.println("Error de base de datos. Compruebe que MySQL este activo.");
         } finally {
-            usuarioController.cerrarSesion();
+            usuarioService.cerrarSesion();
             System.out.println("Sesion cerrada.");
         }
     }

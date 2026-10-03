@@ -6,16 +6,11 @@ import com.tpoo.upn.dao.MembresiaDAO;
 import com.tpoo.upn.model.Cliente;
 import com.tpoo.upn.model.Ingreso;
 import com.tpoo.upn.model.Membresia;
-import com.tpoo.upn.model.Usuario;
 import com.tpoo.upn.session.Sesion;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Reglas de negocio de ingresos: registrar el acceso de un cliente
- * y consultar su historial.
- */
 public class IngresoService {
 
     private final IngresoDAO ingresoDAO = new IngresoDAO();
@@ -30,32 +25,24 @@ public class IngresoService {
         this.sesion = sesion;
     }
 
-    /**
-     * Registra el ingreso solo si el cliente existe y tiene una membresia vigente.
-     * El usuario se toma de la Sesion y la fecha y hora del reloj del sistema.
-     */
+    // Solo registra si el cliente existe y tiene una membresia vigente.
     public Ingreso registrarIngreso(String dni) throws SQLException {
         exigirRecepcionista();
         if (dni == null || dni.isBlank()) {
             throw new IllegalArgumentException("El DNI es obligatorio");
         }
-
         Cliente cliente = clienteDAO.buscarPorDni(dni);
         if (cliente == null) {
             throw new IllegalArgumentException("El cliente no existe");
         }
 
-        // Se toma una sola vez: la misma marca de tiempo decide la vigencia y se guarda en el ingreso.
         LocalDateTime momento = LocalDateTime.now();
-
         Membresia autorizada = buscarMembresiaVigente(cliente, momento);
         if (autorizada == null) {
             throw new IllegalArgumentException("El cliente no tiene una membresia vigente");
         }
 
-        Usuario empleado = sesion.getUsuarioActual();
-        Ingreso ingreso = new Ingreso(cliente, autorizada, empleado, momento);
-        // Se informa el fallo en lugar de devolver un ingreso que no quedo guardado.
+        Ingreso ingreso = new Ingreso(cliente, autorizada, sesion.getUsuarioActual(), momento);
         if (!ingresoDAO.insertar(ingreso)) {
             throw new SQLException("No se pudo guardar el ingreso");
         }
@@ -67,25 +54,16 @@ public class IngresoService {
         if (dni == null || dni.isBlank()) {
             throw new IllegalArgumentException("El DNI es obligatorio");
         }
-
-        // Si el cliente no existe es un error; si existe pero no ha entrado nunca, la lista va vacia.
         if (clienteDAO.buscarPorDni(dni) == null) {
             throw new IllegalArgumentException("El cliente no existe");
         }
         return ingresoDAO.listarPorCliente(dni);
     }
 
-    /**
-     * Devuelve la membresia vigente del cliente, o null si no tiene ninguna.
-     * Si hubiera varias vigentes se elige la de mayor idMembresia, que es la registrada
-     * mas recientemente; es un criterio tecnico para que la eleccion sea siempre la misma.
-     */
+    // Si hay varias vigentes se usa la de mayor idMembresia (la mas reciente).
     private Membresia buscarMembresiaVigente(Cliente cliente, LocalDateTime momento) throws SQLException {
-        List<Membresia> membresias = membresiaDAO.listarPorCliente(cliente.getDni());
         Membresia elegida = null;
-
-        for (Membresia membresia : membresias) {
-            // La membresia debe ser del mismo cliente; se comparan los ids, no las referencias.
+        for (Membresia membresia : membresiaDAO.listarPorCliente(cliente.getDni())) {
             if (membresia.getCliente().getIdCliente() != cliente.getIdCliente()) {
                 continue;
             }

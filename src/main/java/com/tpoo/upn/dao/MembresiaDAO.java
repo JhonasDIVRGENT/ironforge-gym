@@ -13,17 +13,9 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Acceso a la tabla membresias.
- * No tiene actualizar ni eliminar: renovar significa insertar un periodo nuevo
- * y las membresias anteriores se conservan como historial.
- */
+// Sin actualizar ni eliminar: renovar inserta un periodo nuevo y los anteriores quedan como historial.
 public class MembresiaDAO {
 
-    /**
-     * Consulta base con JOIN para traer tambien el cliente y el tipo en una sola lectura.
-     * Los alias evitan confundir las columnas nombres/apellidos y nombre, que se repiten entre tablas.
-     */
     private static final String SQL_SELECT =
             "SELECT m.id_membresia, m.fecha_inicio, m.fecha_fin, "
             + "c.id_cliente, c.dni, c.nombres AS cliente_nombres, "
@@ -40,7 +32,6 @@ public class MembresiaDAO {
         try (Connection con = ConexionDB.getConexion();
              PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            // De los objetos relacionados solo se guarda su id: asi funcionan las claves foraneas.
             ps.setInt(1, membresia.getCliente().getIdCliente());
             ps.setInt(2, membresia.getTipo().getIdTipo());
             ps.setDate(3, Date.valueOf(membresia.getFechaInicio()));
@@ -96,10 +87,7 @@ public class MembresiaDAO {
         return membresias;
     }
 
-    /**
-     * Membresias que ya estaban vigentes en la fecha desde y que vencen entre desde y hasta.
-     * BETWEEN incluye ambos extremos y fecha_inicio <= desde descarta las que aun no empiezan.
-     */
+    // Vigentes en "desde" y que vencen entre "desde" y "hasta" (ambos incluidos).
     public List<Membresia> listarPorVencer(LocalDate desde, LocalDate hasta) throws SQLException {
         String sql = SQL_SELECT
                 + "WHERE m.fecha_fin BETWEEN ? AND ? AND m.fecha_inicio <= ? "
@@ -123,7 +111,6 @@ public class MembresiaDAO {
         return membresias;
     }
 
-    /** Reconstruye la Membresia junto con el Cliente y el TipoMembresia que trajo el JOIN. */
     private Membresia mapearMembresia(ResultSet rs) throws SQLException {
         Cliente cliente = new Cliente(
                 rs.getInt("id_cliente"),
